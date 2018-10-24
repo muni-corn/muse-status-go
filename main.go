@@ -26,11 +26,6 @@ func main() {
 	}
 }
 
-func date() string {
-	now := time.Now()
-	return "\uf150  " + now.Format("3:04 pm") + "  " + f.Dim(now.Format("Mon, Jan 2"))
-}
-
 func battery() string {
 	output, err := exec.Command("acpi").Output()
 	if err != nil {
