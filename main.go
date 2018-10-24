@@ -1,45 +1,55 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
-	"os/exec"
-	"time"
-	"regexp"
+	"muse-status/date"
 	f "muse-status/format"
 	bat "muse-status/sbattery"
-	"encoding/json"
+	"os/exec"
+	"regexp"
+	"time"
 )
 
 func main() {
-	regex := regexp.MustCompile(`\r?\n`);
-	for {
-		status := window() + f.Center(date()) + " " + f.Right(bat.Status())
+	// channels
+	batteryChannel := make(chan string)
+	dateChannel := make(chan string)
 
-		// add background and remove line returns
-		status = regex.ReplaceAllString(status, "")
+	var battery string
+	var date string
+
+	lineReturnRegex := regexp.MustCompile(`\r?\n`)
+	for {
+		select {
+		case battery = <-batteryChannel:
+		case date = <-dateChannel:
+		}
+
+		status := window() + f.Center(date) + " " + f.Right(battery)
+
+		// remove line returns
+		status = lineReturnRegex.ReplaceAllString(status, "")
 
 		// add left and right padding
 		status = "        " + status + "        "
 
-		fmt.Println(status);
-		time.Sleep(time.Second / 2)
+		fmt.Println(status)
 	}
-}
-
-func battery() string {
-	output, err := exec.Command("acpi").Output()
-	if err != nil {
-		return "Error executing acpi. Is it installed?"
-	}
-	return string(output)
 }
 
 func window() string {
-	output, err := exec.Command("xdotool", "getwindowfocus", "getwindowname").Output()
+	cmdOutput, err := exec.Command("xdotool", "getwindowfocus", "getwindowname").Output()
 	if err != nil {
 		return "Error executing xdotool. Is it installed?"
 	}
-	return f.Dim(string(output))
+
+	output := string(cmdOutput)
+	if output == "i3" {
+		output = date.GetGreeting()
+	}
+
+	return output
 }
 
 func mpd() string {
@@ -52,22 +62,22 @@ func mpd() string {
 }
 
 type i3Workspace struct {
-	num int
-	name string
+	num     int
+	name    string
 	visible bool
 	focused bool
-	urgent bool
+	urgent  bool
 }
 
 func i3() string {
-	output, err := exec.Command("i3-msg", "-t", "get_workspaces").Output();
+	output, err := exec.Command("i3-msg", "-t", "get_workspaces").Output()
 	if err != nil {
 		return "Error executing i3-msg."
 	}
 	var workspaces []i3Workspace
 	err = json.Unmarshal(output, &workspaces)
-	if (err != nil) {
-		return "Couldn't process i3 json: " + err.Error();
+	if err != nil {
+		return "Couldn't process i3 json: " + err.Error()
 	}
 	// TODO
 	return ""
