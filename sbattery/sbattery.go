@@ -11,8 +11,10 @@ import (
 	"time"
 )
 
+// ChargeStatus acts as an enum for battery status
 type ChargeStatus int
 
+// Enum for battery statuses
 const (
 	Unknown     ChargeStatus = 0
 	Discharging ChargeStatus = 1
@@ -20,13 +22,17 @@ const (
 	Full        ChargeStatus = 3
 )
 
-// StartSmartBatteryBroadcast takes in a channel
-func StartSmartBatteryBroadcast(channel * chan string) {
-
+// StartSmartBatteryBroadcast takes in a channel and sends smart battery updates to it
+func StartSmartBatteryBroadcast(channel chan string) {
+	go func() {
+		for {
+			channel <- status()
+			time.Sleep(time.Minute)
+		}
+	}
 }
 
-// Status returns the status of the battery using acpi. It returns an icon, percentage, and time remaining
-func Status() string {
+func status() string {
 	// battery icons
 	dischargingIcons := []rune{'\uf08e', '\uf07a', '\uf07b', '\uf07c', '\uf07d', '\uf07e', '\uf07f', '\uf080', '\uf081', '\uf082', '\uf079'}
 	chargingIcons := []rune{'\uf89e', '\uf89b', '\uf086', '\uf087', '\uf088', '\uf89c', '\uf089', '\uf89d', '\uf08a', '\uf08b', '\uf085'}
