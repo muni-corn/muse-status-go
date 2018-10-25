@@ -8,13 +8,13 @@ import (
 	bat "muse-status/sbattery"
 	"os/exec"
 	"regexp"
-	"time"
+	"strings"
 )
 
 func main() {
 	// channels
-	batteryChannel := make(chan string)
-	dateChannel := make(chan string)
+	batteryChannel := bat.StartSmartBatteryBroadcast()
+	dateChannel := date.StartDateBroadcast()
 
 	var battery string
 	var date string
@@ -45,11 +45,11 @@ func window() string {
 	}
 
 	output := string(cmdOutput)
-	if output == "i3" {
+	if strings.Contains(output, "i3") {
 		output = date.GetGreeting()
 	}
 
-	return output
+	return f.Dim(output)
 }
 
 func mpd() string {

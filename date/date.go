@@ -5,8 +5,10 @@ import (
 	"time"
 )
 
-// StartDateBroadcast takes a string channel and inputs to it every second
-func StartDateBroadcast(channel chan string) {
+// StartDateBroadcast creates a string channel that transmits the current date
+func StartDateBroadcast() chan string {
+	channel := make(chan string)
+
 	go func() {
 		for {
 			// get current time
@@ -17,6 +19,8 @@ func StartDateBroadcast(channel chan string) {
 			time.Sleep(time.Second)
 		}
 	}()
+
+	return channel
 }
 
 // GetGreeting returns a greeting based on the hour of the day

@@ -22,14 +22,19 @@ const (
 	Full        ChargeStatus = 3
 )
 
-// StartSmartBatteryBroadcast takes in a channel and sends smart battery updates to it
-func StartSmartBatteryBroadcast(channel chan string) {
+// StartSmartBatteryBroadcast return a channel that transfers intelligent
+// battery information
+func StartSmartBatteryBroadcast() chan string {
+	channel := make(chan string)
+
 	go func() {
 		for {
 			channel <- status()
 			time.Sleep(time.Minute)
 		}
-	}
+	}()
+
+	return channel
 }
 
 func status() string {
