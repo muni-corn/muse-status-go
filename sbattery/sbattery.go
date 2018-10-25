@@ -22,6 +22,12 @@ const (
 	Full        ChargeStatus = 3
 )
 
+var (
+	// battery icons
+	dischargingIcons = [11]rune{'\uf08e', '\uf07a', '\uf07b', '\uf07c', '\uf07d', '\uf07e', '\uf07f', '\uf080', '\uf081', '\uf082', '\uf079'}
+	chargingIcons = [11]rune{'\uf89e', '\uf89b', '\uf086', '\uf087', '\uf088', '\uf89c', '\uf089', '\uf89d', '\uf08a', '\uf08b', '\uf085'}
+)
+
 // StartSmartBatteryBroadcast return a channel that transfers intelligent
 // battery information
 func StartSmartBatteryBroadcast() chan string {
@@ -38,9 +44,6 @@ func StartSmartBatteryBroadcast() chan string {
 }
 
 func status() string {
-	// battery icons
-	dischargingIcons := []rune{'\uf08e', '\uf07a', '\uf07b', '\uf07c', '\uf07d', '\uf07e', '\uf07f', '\uf080', '\uf081', '\uf082', '\uf079'}
-	chargingIcons := []rune{'\uf89e', '\uf89b', '\uf086', '\uf087', '\uf088', '\uf89c', '\uf089', '\uf89d', '\uf08a', '\uf08b', '\uf085'}
 
 	output, err := exec.Command("acpi").Output()
 	if err != nil {
