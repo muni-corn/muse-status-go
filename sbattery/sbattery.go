@@ -28,18 +28,16 @@ var (
 	chargingIcons = [11]rune{'\uf89e', '\uf89b', '\uf086', '\uf087', '\uf088', '\uf89c', '\uf089', '\uf89d', '\uf08a', '\uf08b', '\uf085'}
 )
 
-// StartSmartBatteryBroadcast return a channel that transfers intelligent
+// StartSmartBatteryBroadcast returns a channel that transfers intelligent
 // battery information
 func StartSmartBatteryBroadcast() chan string {
+	// create a channel
 	channel := make(chan string)
 
-	go func() {
-		for {
-			channel <- status()
-			time.Sleep(time.Minute)
-		}
-	}()
+	// start the broadcast to it (async)
+	go broadcast(channel)
 
+	// return the channel
 	return channel
 }
 
