@@ -25,7 +25,7 @@ const (
 var (
 	// battery icons
 	dischargingIcons = [11]rune{'\uf08e', '\uf07a', '\uf07b', '\uf07c', '\uf07d', '\uf07e', '\uf07f', '\uf080', '\uf081', '\uf082', '\uf079'}
-	chargingIcons = [11]rune{'\uf89e', '\uf89b', '\uf086', '\uf087', '\uf088', '\uf89c', '\uf089', '\uf89d', '\uf08a', '\uf08b', '\uf085'}
+	chargingIcons    = [11]rune{'\uf89e', '\uf89b', '\uf086', '\uf087', '\uf088', '\uf89c', '\uf089', '\uf89d', '\uf08a', '\uf08b', '\uf085'}
 )
 
 // StartSmartBatteryBroadcast returns a channel that transfers intelligent
@@ -55,6 +55,41 @@ func status() string {
 	}
 	status, percentage, timeDone := parseReading(string(output))
 
+	timeString := getTimeRemainingString(status, timeDone)
+
+	finalOutput := getColoredIconAndPercentage(status, percentage) + timeString
+
+	return finalOutput
+}
+
+func getColoredIconAndPercentage(status ChargeStatus, percentage int) string {
+	// icone
+	icon := getBatteryIcon(status, percentage)
+
+	// base string
+	base := icon + " " + strconv.Itoa(percentage) + "%  "
+
+	switch status {
+	case Charging:
+		return base
+	case Discharging:
+		if percentage <= 15 {
+			return format.Alert(base)
+		} else if percentage <= 30 {
+			return format.Warning(base)
+		} else {
+			return base
+		}
+	case Full:
+		return "Full"
+	}
+
+	// something's weird at this point
+	return "Unknown"
+}
+
+// returns the battery icon
+func getBatteryIcon(status ChargeStatus, percentage int) string {
 	// get the battery icon
 	var icon rune
 	switch status {
@@ -67,8 +102,13 @@ func status() string {
 		icon = chargingIcons[len(chargingIcons)-1]
 	}
 
-	var timeString string
-	if (status == Charging || status == Discharging) && !timeDone.IsZero(){
+	return string(icon)
+}
+
+// returns a dimmed string telling at which time the battery will be empty/full
+// e.g. "full at 3:30 pm"
+func getTimeRemainingString(status ChargeStatus, timeDone time.Time) string {
+	if (status == Charging || status == Discharging) && !timeDone.IsZero() {
 		// get the time string prefix
 		var timeStringPrefix string
 		if status == Charging {
@@ -77,12 +117,9 @@ func status() string {
 			timeStringPrefix = "until "
 		}
 
-		timeString = format.Dim(timeStringPrefix + timeDone.Format("3:04 pm"))
+		return format.Dim(timeStringPrefix + timeDone.Format("3:04 pm"))
 	}
-
-	finalOutput := string(icon) + " " + strconv.Itoa(percentage) + "%  " + timeString
-
-	return finalOutput
+	return ""
 }
 
 func parseReading(reading string) (status ChargeStatus, percentage int, timeDone time.Time) {
