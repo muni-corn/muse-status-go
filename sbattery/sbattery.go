@@ -81,7 +81,7 @@ func getColoredIconAndPercentage(status ChargeStatus, percentage int) string {
 			return base
 		}
 	case Full:
-		return "Full"
+		return icon + " Full"
 	}
 
 	// something's weird at this point
@@ -133,15 +133,19 @@ func parseReading(reading string) (status ChargeStatus, percentage int, timeDone
 		status = Discharging
 	case strings.Contains(rawStatus, "Charging"):
 		status = Charging
-	case percentage >= 100:
+	case strings.Contains(rawStatus, "Full"):
 		status = Full
 	default:
-		status = Charging
+		status = Unknown
 	}
 
 	// get the percentage as an int
-	rawPercent := split[1]
-	percentage, _ = strconv.Atoi(strings.TrimSuffix(rawPercent, "%"))
+	if status == Full {
+		percentage = 100
+	} else {
+		rawPercent := split[1]
+		percentage, _ = strconv.Atoi(strings.TrimSuffix(rawPercent, "%"))
+	}
 
 	if len(split) >= 3 {
 		rawTime := split[2]
