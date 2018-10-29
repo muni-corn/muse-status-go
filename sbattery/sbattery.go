@@ -22,6 +22,10 @@ const (
 	Full        ChargeStatus = 3
 )
 
+const (
+	recordInterval = 10 // record info every x minutes (status change overrides)
+)
+
 var (
 	// battery icons
 	dischargingIcons = [11]rune{'\uf08e', '\uf07a', '\uf07b', '\uf07c', '\uf07d', '\uf07e', '\uf07f', '\uf080', '\uf081', '\uf082', '\uf079'}
@@ -44,7 +48,7 @@ func StartSmartBatteryBroadcast() chan string {
 func broadcast(channel chan string) string {
 	for {
 		channel <- status()
-		time.Sleep(time.Second / 20)
+		time.Sleep(time.Second * 20)
 	}
 }
 
@@ -57,12 +61,14 @@ func status() string {
 
 	timeString := getTimeRemainingString(status, timeDone)
 
-	finalOutput := getColoredIconAndPercentage(status, percentage) + timeString
+	finalOutput := getMainInfo(status, percentage) + timeString
 
 	return finalOutput
 }
 
-func getColoredIconAndPercentage(status ChargeStatus, percentage int) string {
+// returns a colored icon and percentage, the main info of this
+// module
+func getMainInfo(status ChargeStatus, percentage int) string {
 	// icone
 	icon := getBatteryIcon(status, percentage)
 
@@ -166,3 +172,65 @@ func parseReading(reading string) (status ChargeStatus, percentage int, timeDone
 
 	return
 }
+
+// SysPowerSupplyBaseDir is the base directory for power supply
+const SysPowerSupplyBaseDir = "/sys/class/power_supply"
+
+func getBatteryStatus() ChargeStatus {
+	return Unknown
+}
+
+func getBatteryPercentage() float32 {
+	return 0
+}
+
+func takeReading() {
+
+}
+
+func recordReading() {
+
+}
+
+/*  DATA FILE FORMAT
+ *
+ *	data recorded in %/hour
+ *	
+ *	C			// charging avg
+ *	C0			|
+ *	C10  		|
+ *	C20			| charging values by percentage
+ *	...			| starting at value specified
+ *	C90			|
+ *	
+ *	D			// discharging avg
+ *	D0			|
+ *	D1			|
+ *	D2			| discharging avg values by hour of day
+ *	...			| (used for predicting nonexistent day-by-day values)
+ *	D23			|			
+ *	
+ *	S0			| sunday
+ *	S1			|
+ *	S2			| discharging values by hour by day of week
+ *	...			|
+ *	S23			|
+ *	
+ *	M0			// monday
+ *	...
+ *
+ *	T0			// thursday
+ *  ...
+ *
+ *	W0			// wednesday
+ *  ...
+ *
+ *	R0			// thursday
+ *  ...
+ *
+ *	F0			// friday
+ *  ...
+ *
+ *	A0			// saturday 
+ *  ...
+ */
