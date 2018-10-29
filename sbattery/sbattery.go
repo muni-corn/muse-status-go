@@ -193,44 +193,54 @@ func recordReading() {
 }
 
 /*  DATA FILE FORMAT
- *
- *	data recorded in %/hour
- *	
- *	C			// charging avg
- *	C0			|
- *	C10  		|
- *	C20			| charging values by percentage
- *	...			| starting at value specified
- *	C90			|
- *	
- *	D			// discharging avg
- *	D0			|
- *	D1			|
- *	D2			| discharging avg values by hour of day
- *	...			| (used for predicting nonexistent day-by-day values)
- *	D23			|			
- *	
- *	S0			| sunday
- *	S1			|
- *	S2			| discharging values by hour by day of week
- *	...			|
- *	S23			|
- *	
- *	M0			// monday
- *	...
- *
- *	T0			// thursday
- *  ...
- *
- *	W0			// wednesday
- *  ...
- *
- *	R0			// thursday
- *  ...
- *
- *	F0			// friday
- *  ...
- *
- *	A0			// saturday 
- *  ...
+
+data recorded like so:
+key %/hour records
+
+where "records" is the amount of times the parameter has been recorded.
+used for recording a new average based on the current average and how
+many times the parameter has been recorded before
+for example:
+
+C 3.14159 200
+
+--- BEGIN FILE EXAMPLE ------------------------------------------------
+
+C			// charging avg
+C0			|
+C10  		|
+C20			| charging values by percentage
+...			| starting at value specified
+C90			|
+
+D			// discharging avg
+D0			|
+D1			|
+D2			| discharging avg values by hour of day
+...			| (used for predicting nonexistent day-by-day values)
+D23			|			
+
+S0			| sunday
+S1			|
+S2			| discharging values by hour by day of week
+...			|
+S23			|
+
+M0			// monday
+...
+
+T0			// thursday
+...
+
+W0			// wednesday
+...
+
+R0			// thursday
+...
+
+F0			// friday
+...
+
+A0			// saturday 
+...
  */
