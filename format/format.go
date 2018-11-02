@@ -59,3 +59,8 @@ func cubicEaseArc(x float32) float32 {
 	cubic++
 	return cubic
 }
+
+// Separator returns 4 spaces as a separator between data
+func Separator() string {
+	return "    "
+}
