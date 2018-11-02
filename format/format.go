@@ -1,9 +1,9 @@
 package format
 
 import (
-	"time"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // Left aligns the original string to the left
@@ -37,12 +37,12 @@ func Alert(original string) string {
 	milliseconds := time.Now().Nanosecond() / 1000000
 
 	// get alpha byte value
-	alpha := int64(cubicEaseArc(float32(milliseconds) / 1000) * 255);
+	alpha := int64(cubicEaseArc(float32(milliseconds)/1000) * 255)
 
 	// limit alpha to [64, 255]
-	alpha = alpha * 3/4  + 255 / 4
+	alpha = alpha*3/4 + 255/4
 
-	hex := strings.ToUpper(strconv.FormatInt(alpha, 16));
+	hex := strings.ToUpper(strconv.FormatInt(alpha, 16))
 
 	return "%{F#" + hex + "FF0000}" + original + "%{F-}"
 }
@@ -51,7 +51,7 @@ func Alert(original string) string {
 func cubicEaseArc(x float32) float32 {
 	x *= 2
 	x--
-	cubic := x * x * x;
+	cubic := x * x * x
 	if cubic > 0 {
 		cubic *= -1
 	}
