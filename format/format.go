@@ -37,12 +37,12 @@ func Alert(original string) string {
 	milliseconds := time.Now().Nanosecond() / 1000000
 
 	// get alpha byte value
-	alpha := int64(cubicEaseArc(float32(milliseconds)/1000) * 255)
+	alpha := int(cubicEaseArc(float32(milliseconds)/1000) * 255)
 
 	// limit alpha to [64, 255]
 	alpha = alpha*3/4 + 255/4
 
-	hex := strings.ToUpper(strconv.FormatInt(alpha, 16))
+	hex := ByteToHex(alpha)
 
 	return "%{F#" + hex + "FF0000}" + original + "%{F-}"
 }
@@ -63,4 +63,15 @@ func cubicEaseArc(x float32) float32 {
 // Separator returns 4 spaces as a separator between data
 func Separator() string {
 	return "    "
+}
+
+// ByteToHex takes a value from 0 to 255 and returns it in hexadecimal form
+func ByteToHex(value int) string {
+	// constrain to 0...255
+	if value > 255 {
+		return "FF"
+	} else if value < 0 {
+		return "00"
+	}
+	return strings.ToUpper(strconv.FormatInt(int64(value), 16))
 }
