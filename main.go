@@ -8,7 +8,7 @@ import (
 	"muse-status/format"
 	"muse-status/sbattery"
 	"muse-status/network"
-	// "muse-status/volume"
+	"muse-status/volume"
 	"os/exec"
 	"regexp"
 	"strings"
@@ -20,13 +20,13 @@ func main() {
 	batteryChannel := sbattery.StartSmartBatteryBroadcast()
 	dateChannel := date.StartDateBroadcast()
 	networkChannel := network.StartNetworkBroadcast()
-	// volumeChannel := volume.StartVolumeBroadcast()
+	volumeChannel := volume.StartVolumeBroadcast()
 	brightnessChannel := brightness.StartBrightnessBroadcast()
 
 	var battery string
 	var date string
 	var network string
-	// var volume string
+	var volume string
 	var brightness string
 
 	lineReturnRegex := regexp.MustCompile(`\r?\n`)
@@ -35,11 +35,11 @@ func main() {
 		case battery = <-batteryChannel:
 		case date = <-dateChannel:
 		case network = <-networkChannel:
-		// case volume = <-volumeChannel:
+		case volume = <-volumeChannel:
 		case brightness = <-brightnessChannel:
 		}
 
-		status := window() + format.Center(date) + " " + format.Right(brightness + format.Separator() + network + format.Separator() + battery)
+		status := window() + format.Center(date) + " " + format.Right(brightness + format.Separator() + volume + format.Separator() + network + format.Separator() + battery)
 
 		// remove line returns
 		status = lineReturnRegex.ReplaceAllString(status, "")
