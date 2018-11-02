@@ -60,10 +60,10 @@ func StartBrightnessBroadcast() chan string {
 				if interpolation < 1 {
 					now := time.Now().UnixNano()
 					interpolation = float32(now - lastChangeTime) / float32(int(time.Second) * 2)
+					status := string(getIcon(brightnessPercentage)) + "  " + strconv.Itoa(brightnessPercentage) + "%"
+					channel <- format.FadeToDim(status, interpolation)
 				}
 
-				status := string(getIcon(brightnessPercentage)) + "  " + strconv.Itoa(brightnessPercentage) + "%"
-				channel <- format.FadeToDim(status, interpolation)
 			}
 			time.Sleep(time.Second / 10)
 		}
