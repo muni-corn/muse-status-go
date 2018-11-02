@@ -27,6 +27,9 @@ func StartDateBroadcast() chan string {
 
 			if timeString != lastTimeString {
 				dateString := now.Format("Mon, Jan 2")
+				
+				// output to channel
+				channel <- "\uf150  " + timeString + "  " + f.Dim(dateString)
 
 				// if the time has changed, we're not changing again anytime
 				// soon. get number of seconds until next minute change and
@@ -36,16 +39,13 @@ func StartDateBroadcast() chan string {
 				// time change)
 				sleepInterval = time.Second * time.Duration(60 - now.Second()) - time.Second / 4
 
-				// constrain, just in case
+				// update lastTimeString
+				lastTimeString = timeString
+
+				// skip sleeping if we're not going to sleep anyways
 				if sleepInterval < 0 {
 					continue
 				}
-
-				// update lastTimeString
-				lastTimeString = timeString
-				
-				// output to channel
-				channel <- "\uf150  " + timeString + "  " + f.Dim(dateString)
 			}
 
 			// sleep
