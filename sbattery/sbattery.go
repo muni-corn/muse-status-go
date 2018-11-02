@@ -45,17 +45,24 @@ func StartSmartBatteryBroadcast() chan string {
 	return channel
 }
 
+// an async function that broadcasts battery information to the specified
+// channel
 func broadcast(channel chan string) string {
 	for {
-		channel <- status()
-		time.Sleep(time.Second * 20)
+		status, alert := status()
+		channel <- status
+		if (alert) {
+			time.Sleep(time.Second / 15)
+		} else {
+			time.Sleep(time.Second * 20)
+		}
 	}
 }
 
-func status() string {
+func status() (string, bool) {
 	output, err := exec.Command("acpi").Output()
 	if err != nil {
-		return "Error executing acpi. Is it installed?"
+		return "Error executing acpi. Is it installed?", false
 	}
 	status, percentage, timeDone := parseReading(string(output))
 
@@ -63,7 +70,7 @@ func status() string {
 
 	finalOutput := getMainInfo(status, percentage) + timeString
 
-	return finalOutput
+	return finalOutput, percentage <= 15
 }
 
 // returns a colored icon and percentage, the main info of this
@@ -192,6 +199,10 @@ func recordReading() {
 
 }
 
+func getStringFromFile(filepath string) {
+
+}
+
 /*  DATA FILE FORMAT
 
 data recorded like so:
@@ -208,10 +219,10 @@ C 3.14159 200
 
 C			// charging avg
 C0			|
-C10  		|
-C20			| charging values by percentage
-...			| starting at value specified
-C90			|
+C1  		|
+C2			| charging values by percentage
+...			| 
+C9			|
 
 D			// discharging avg
 D0			|
@@ -243,4 +254,4 @@ F0			// friday
 
 A0			// saturday 
 ...
- */
+*/
