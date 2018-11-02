@@ -3,6 +3,12 @@ package date
 import (
 	f "muse-status/format"
 	"time"
+	"strconv"
+)
+
+const (
+	timeFormat = "3:04 pm"
+	dateFormat = "Mon, Jan 2"
 )
 
 // StartDateBroadcast creates a string channel that transmits the current date
@@ -10,13 +16,41 @@ func StartDateBroadcast() chan string {
 	channel := make(chan string)
 
 	go func() {
+		var lastTimeString string
+
 		for {
 			// get current time
 			now := time.Now()
-			channel <- "\uf150  " + now.Format("3:04 pm") + "  " + f.Dim(now.Format("Mon, Jan 2"))
+			timeString := now.Format("3:04 pm")
 
-			// sleep for a second
-			time.Sleep(time.Second)
+			// default sleep interval to a 20th of a second
+			sleepInterval := time.Second / 20
+
+			if timeString != lastTimeString {
+				dateString := now.Format("Mon, Jan 2")
+
+				// if the time has changed, we're not changing again anytime
+				// soon. get number of seconds until next minute change and
+				// sleep for that many seconds minus 0.25 seconds (in case we
+				// sleep too long; this allows for an accurate time change as
+				// we're updating every 20th second when we're anticipating a
+				// time change)
+				sleepInterval = time.Second * time.Duration(60 - now.Second()) - time.Second / 4
+
+				// constrain, just in case
+				if sleepInterval < 0 {
+					continue
+				}
+
+				// update lastTimeString
+				lastTimeString = timeString
+				
+				// output to channel
+				channel <- "\uf150  " + timeString + "  " + f.Dim(dateString)
+			}
+
+			// sleep
+			time.Sleep(sleepInterval)
 		}
 	}()
 
