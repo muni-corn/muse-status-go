@@ -1,32 +1,45 @@
 package main
 
 import (
-	"encoding/json"
+	// "encoding/json"
 	"fmt"
+	"muse-status/brightness"
 	"muse-status/date"
-	f "muse-status/format"
-	bat "muse-status/sbattery"
+	"muse-status/format"
+	"muse-status/sbattery"
+	"muse-status/network"
+	// "muse-status/volume"
 	"os/exec"
 	"regexp"
 	"strings"
+	// "go.i3wm.org/i3"
 )
 
 func main() {
 	// channels
-	batteryChannel := bat.StartSmartBatteryBroadcast()
+	batteryChannel := sbattery.StartSmartBatteryBroadcast()
 	dateChannel := date.StartDateBroadcast()
+	networkChannel := network.StartNetworkBroadcast()
+	// volumeChannel := volume.StartVolumeBroadcast()
+	brightnessChannel := brightness.StartBrightnessBroadcast()
 
 	var battery string
 	var date string
+	var network string
+	// var volume string
+	var brightness string
 
 	lineReturnRegex := regexp.MustCompile(`\r?\n`)
 	for {
 		select {
 		case battery = <-batteryChannel:
 		case date = <-dateChannel:
+		case network = <-networkChannel:
+		// case volume = <-volumeChannel:
+		case brightness = <-brightnessChannel:
 		}
 
-		status := window() + f.Center(date) + " " + f.Right(battery)
+		status := window() + format.Center(date) + " " + format.Right(brightness + format.Separator() + network + format.Separator() + battery)
 
 		// remove line returns
 		status = lineReturnRegex.ReplaceAllString(status, "")
@@ -43,13 +56,13 @@ func window() string {
 	if err != nil {
 		return "Error executing xdotool. Is it installed?"
 	}
-
+		
 	output := string(cmdOutput)
 	if strings.Contains(output, "i3") {
 		output = date.GetGreeting()
 	}
 
-	return f.Dim(output)
+	return format.Dim(output)
 }
 
 func mpd() string {
@@ -69,16 +82,3 @@ type i3Workspace struct {
 	urgent  bool
 }
 
-func i3() string {
-	output, err := exec.Command("i3-msg", "-t", "get_workspaces").Output()
-	if err != nil {
-		return "Error executing i3-msg."
-	}
-	var workspaces []i3Workspace
-	err = json.Unmarshal(output, &workspaces)
-	if err != nil {
-		return "Couldn't process i3 json: " + err.Error()
-	}
-	// TODO
-	return ""
-}

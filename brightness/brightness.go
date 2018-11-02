@@ -28,6 +28,7 @@ func StartBrightnessBroadcast() chan string {
 		lastChangeTime := int64(0)
 		interpolation := float32(0.0)
 
+		// if there's an error, fohgetaboutit
 		if err != nil {
 			panic(err)
 		}
