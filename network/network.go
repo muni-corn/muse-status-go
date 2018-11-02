@@ -49,7 +49,6 @@ func getWifi() string {
 	}
 
 	strOutput := string(output)
-	println("strOutput = " + strOutput)
 
 	regex := regexp.MustCompile(`\r?\n`)
 	interfaces := regex.Split(strOutput, -1)
