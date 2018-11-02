@@ -31,6 +31,23 @@ func Warning(original string) string {
 	return "%{F#FFAA00}" + original + "%{F-}"
 }
 
+// FadeToDim colors the string according to interpolation from full white (0) to
+// dim (1)
+func FadeToDim(original string, interpolation float32) string {
+	// constrain
+	if interpolation < 0 {
+		interpolation = 0
+	} else if interpolation > 1 {
+		interpolation = 1
+	}
+
+	// reverse
+	interpolation = 1 - interpolation
+
+	hex := ByteToHex(255/2 + int(interpolation*255/2))
+	return "%{F#" + hex + "FFFFFF}" + original + "%{F-}"
+}
+
 // Alert blinks the original string red
 func Alert(original string) string {
 	// convert nanoseconds to milliseconds
@@ -39,7 +56,7 @@ func Alert(original string) string {
 	// get alpha byte value
 	alpha := int(cubicEaseArc(float32(milliseconds)/1000) * 255)
 
-	// limit alpha to [64, 255]
+	// limit alpha minimum to 25%
 	alpha = alpha*3/4 + 255/4
 
 	hex := ByteToHex(alpha)
