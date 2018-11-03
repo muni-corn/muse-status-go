@@ -62,10 +62,12 @@ func StartBrightnessBroadcast() chan string {
 					interpolation = float32(now - lastChangeTime) / float32(int(time.Second) * 2)
 					status := string(getIcon(brightnessPercentage)) + "  " + strconv.Itoa(brightnessPercentage) + "%"
 					channel <- format.FadeToDim(status, interpolation)
+					time.Sleep(time.Second / 10)
+				} else {
+					time.Sleep(time.Second / 2)
 				}
 
 			}
-			time.Sleep(time.Second / 10)
 		}
 	}()
 
