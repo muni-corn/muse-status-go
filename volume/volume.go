@@ -60,7 +60,7 @@ func StartVolumeBroadcast() chan string {
 						status = string(getIcon(current)) + "  " + strconv.Itoa(current) + "%"
 					}
 					channel <- format.FadeToDim(status, interpolation)
-					time.Sleep(time.Second / 10)
+					time.Sleep(time.Second / 15)
 				} else {
 					time.Sleep(time.Second / 2)
 				}
