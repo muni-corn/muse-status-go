@@ -64,9 +64,8 @@ func StartBrightnessBroadcast() chan string {
 					channel <- format.FadeToDim(status, interpolation)
 					time.Sleep(time.Second / 15)
 				} else {
-					time.Sleep(time.Second / 2)
+					time.Sleep(time.Second / 4)
 				}
-
 			}
 		}
 	}()
