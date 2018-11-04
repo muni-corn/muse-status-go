@@ -88,7 +88,14 @@ func getWifi() string {
 			}
 
 			// get the icon
-			icon := connectionIcons[len(connectionIcons)*signal/100]
+			iconIndex := len(connectionIcons)*signal/100
+
+			// constrains index
+			if iconIndex >= len(connectionIcons) {
+				iconIndex = len(connectionIcons) - 1
+			}
+
+			icon := connectionIcons[iconIndex]
 			return string(icon) + "  " + ssid
 		} 
 		// if none of the above, we're disconnected
