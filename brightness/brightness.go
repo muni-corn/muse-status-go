@@ -13,7 +13,7 @@ const (
 )
 
 var (
-	brightnessIcons = [7]rune{'', '', '', '', '', '', ''}
+	brightnessIcons = [6]rune{'', '', '', '', '', ''}
 	card            = "intel_backlight"
 )
 
