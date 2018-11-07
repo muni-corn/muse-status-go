@@ -6,13 +6,13 @@ import (
 	"muse-status/brightness"
 	"muse-status/date"
 	"muse-status/format"
-	"muse-status/sbattery"
 	"muse-status/network"
+	"muse-status/sbattery"
 	"muse-status/volume"
 	"muse-status/weather"
+	"muse-status/window"
 	"os/exec"
 	"regexp"
-	"strings"
 	// "go.i3wm.org/i3"
 )
 
@@ -24,13 +24,9 @@ func main() {
 	volumeChannel := volume.StartVolumeBroadcast()
 	brightnessChannel := brightness.StartBrightnessBroadcast()
 	weatherChannel := weather.StartWeatherBroadcast()
+	windowChannel := window.StartWindowBroadcast()
 
-	var battery string
-	var date string
-	var network string
-	var volume string
-	var brightness string
-	var weather string
+	var battery, date, network, volume, brightness, weather, window string
 
 	lineReturnRegex := regexp.MustCompile(`\r?\n`)
 	for {
@@ -41,9 +37,10 @@ func main() {
 		case volume = <-volumeChannel:
 		case brightness = <-brightnessChannel:
 		case weather = <-weatherChannel:
+		case window = <-windowChannel:
 		}
 
-		status := window() + format.Center(date + format.Separator() + weather) + " " + format.Right(brightness + format.Separator() + volume + format.Separator() + network + format.Separator() + battery)
+		status := window + format.Center(date+format.Separator()+weather) + " " + format.Right(brightness+format.Separator()+volume+format.Separator()+network+format.Separator()+battery)
 
 		// remove line returns
 		status = lineReturnRegex.ReplaceAllString(status, "")
@@ -53,20 +50,6 @@ func main() {
 
 		fmt.Println(status)
 	}
-}
-
-func window() string {
-	cmdOutput, err := exec.Command("xdotool", "getwindowfocus", "getwindowname").Output()
-	if err != nil {
-		return "Error executing xdotool. Is it installed?"
-	}
-		
-	output := string(cmdOutput)
-	if strings.Contains(output, "i3") {
-		output = date.GetGreeting()
-	}
-
-	return format.Dim(output)
 }
 
 func mpd() string {
@@ -85,4 +68,3 @@ type i3Workspace struct {
 	focused bool
 	urgent  bool
 }
-
