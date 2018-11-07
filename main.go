@@ -68,21 +68,3 @@ func window() string {
 
 	return format.Dim(output)
 }
-
-func mpd() string {
-	output, err := exec.Command("mpc").Output()
-	if err != nil {
-		return "Error executing mpc. Is it installed?"
-	}
-	return string(output)
-
-}
-
-type i3Workspace struct {
-	num     int
-	name    string
-	visible bool
-	focused bool
-	urgent  bool
-}
-
