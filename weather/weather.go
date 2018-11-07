@@ -1,18 +1,18 @@
 package weather
 
 import (
-	"fmt"
-	"unicode"
 	"encoding/json"
-	"strconv"
+	"fmt"
 	"io/ioutil"
-	"net/http"
-	"time"
 	"muse-status/format"
+	"net/http"
+	"strconv"
+	"time"
+	"unicode"
 )
 
 const (
-	updateIntervalMinutes = 10                                 // interval after which to update weather, in minutes
+	updateIntervalMinutes = 3                                  // interval after which to update weather, in minutes
 	apiKey                = "d179cc80ed41e8080f9e86356b604ee3" // OpenWeatherMap API key
 	units                 = "imperial"
 	locationServicesURL   = "https://location.services.mozilla.com/v1/geolocate?key=geoclue"
@@ -82,7 +82,7 @@ func getWeatherIcon(report fullWeatherReport) string {
 func getWeatherString(report fullWeatherReport) string {
 	// basically round degrees to the nearest int and add the degree sign
 	degrees := strconv.Itoa(int(report.Main.Temp+0.5)) + "°"
-	
+
 	// capitalize the first letter in the description
 	desc := []rune(report.Weather[0].Description)
 	desc[0] = unicode.ToUpper(desc[0])
