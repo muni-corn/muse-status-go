@@ -9,6 +9,7 @@ import (
 	"muse-status/sbattery"
 	"muse-status/network"
 	"muse-status/volume"
+	"muse-status/weather"
 	"os/exec"
 	"regexp"
 	"strings"
@@ -22,12 +23,14 @@ func main() {
 	networkChannel := network.StartNetworkBroadcast()
 	volumeChannel := volume.StartVolumeBroadcast()
 	brightnessChannel := brightness.StartBrightnessBroadcast()
+	weatherChannel := weather.StartWeatherBroadcast()
 
 	var battery string
 	var date string
 	var network string
 	var volume string
 	var brightness string
+	var weather string
 
 	lineReturnRegex := regexp.MustCompile(`\r?\n`)
 	for {
@@ -37,9 +40,10 @@ func main() {
 		case network = <-networkChannel:
 		case volume = <-volumeChannel:
 		case brightness = <-brightnessChannel:
+		case weather = <-weatherChannel:
 		}
 
-		status := window() + format.Center(date) + " " + format.Right(brightness + format.Separator() + volume + format.Separator() + network + format.Separator() + battery)
+		status := window() + format.Center(date + format.Separator() + weather) + " " + format.Right(brightness + format.Separator() + volume + format.Separator() + network + format.Separator() + battery)
 
 		// remove line returns
 		status = lineReturnRegex.ReplaceAllString(status, "")
