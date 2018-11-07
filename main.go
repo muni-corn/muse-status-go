@@ -45,7 +45,7 @@ func main() {
 		status = lineReturnRegex.ReplaceAllString(status, "")
 
 		// add left and right padding
-		status = "        " + status + "        "
+		status = format.Separator() + status + format.Separator()
 
 		fmt.Println(status)
 	}
