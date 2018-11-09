@@ -1,19 +1,18 @@
 package main
 
 import (
-	// "encoding/json"
 	"fmt"
 	"muse-status/brightness"
 	"muse-status/date"
 	"muse-status/format"
-	"muse-status/sbattery"
+	"muse-status/mpd"
 	"muse-status/network"
+	"muse-status/sbattery"
 	"muse-status/volume"
 	"muse-status/weather"
 	"os/exec"
 	"regexp"
 	"strings"
-	// "go.i3wm.org/i3"
 )
 
 func main() {
@@ -24,6 +23,7 @@ func main() {
 	volumeChannel := volume.StartVolumeBroadcast()
 	brightnessChannel := brightness.StartBrightnessBroadcast()
 	weatherChannel := weather.StartWeatherBroadcast()
+	mpdChannel := mpd.StartMPDBroadcast()
 
 	var battery string
 	var date string
@@ -31,6 +31,7 @@ func main() {
 	var volume string
 	var brightness string
 	var weather string
+	var mpd string
 
 	lineReturnRegex := regexp.MustCompile(`\r?\n`)
 	for {
@@ -41,9 +42,10 @@ func main() {
 		case volume = <-volumeChannel:
 		case brightness = <-brightnessChannel:
 		case weather = <-weatherChannel:
+		case mpd = <-mpdChannel:
 		}
 
-		status := window() + format.Center(date + format.Separator() + weather) + " " + format.Right(brightness + format.Separator() + volume + format.Separator() + network + format.Separator() + battery)
+		status := window() + format.Center(date+format.Separator()+weather+format.Separator()+mpd) + " " + format.Right(brightness+format.Separator()+volume+format.Separator()+network+format.Separator()+battery)
 
 		// remove line returns
 		status = lineReturnRegex.ReplaceAllString(status, "")
@@ -60,7 +62,7 @@ func window() string {
 	if err != nil {
 		return "Error executing xdotool. Is it installed?"
 	}
-		
+
 	output := string(cmdOutput)
 	if strings.Contains(output, "i3") {
 		output = date.GetGreeting()
