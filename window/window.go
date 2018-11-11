@@ -6,6 +6,11 @@ import (
 	"strings"
 	"os/exec"
 	"time"
+	"regexp"
+)
+
+var (
+	lineReturnRegex = regexp.MustCompile(`\r?\n`)
 )
 
 // StartWindowBroadcast returns a string channel that is fed info about the
@@ -39,7 +44,10 @@ func window() string {
 	output := string(cmdOutput)
 	if strings.Contains(output, "i3") {
 		output = date.GetGreeting()
+	} else {
+		output = lineReturnRegex.ReplaceAllString(output, "")
 	}
+
 
 	return format.Dim(output)
 }
