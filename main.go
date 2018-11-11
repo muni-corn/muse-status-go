@@ -1,19 +1,17 @@
 package main
 
 import (
-	// "encoding/json"
 	"fmt"
 	"muse-status/brightness"
 	"muse-status/date"
 	"muse-status/format"
+	"muse-status/mpd"
 	"muse-status/network"
 	"muse-status/sbattery"
 	"muse-status/volume"
 	"muse-status/weather"
 	"muse-status/window"
-	"os/exec"
 	"regexp"
-	// "go.i3wm.org/i3"
 )
 
 func main() {
@@ -24,9 +22,10 @@ func main() {
 	volumeChannel := volume.StartVolumeBroadcast()
 	brightnessChannel := brightness.StartBrightnessBroadcast()
 	weatherChannel := weather.StartWeatherBroadcast()
+	mpdChannel := mpd.StartMPDBroadcast()
 	windowChannel := window.StartWindowBroadcast()
 
-	var battery, date, network, volume, brightness, weather, window string
+	var battery, date, mpd, network, volume, brightness, weather, window string
 
 	lineReturnRegex := regexp.MustCompile(`\r?\n`)
 	for {
@@ -37,10 +36,11 @@ func main() {
 		case volume = <-volumeChannel:
 		case brightness = <-brightnessChannel:
 		case weather = <-weatherChannel:
+		case mpd = <-mpdChannel:
 		case window = <-windowChannel:
 		}
 
-		status := window + format.Center(date+format.Separator()+weather) + " " + format.Right(brightness+format.Separator()+volume+format.Separator()+network+format.Separator()+battery)
+		status := window + format.Center(date+format.Separator()+weather+format.Separator()+mpd) + " " + format.Right(brightness+format.Separator()+volume+format.Separator()+network+format.Separator()+battery)
 
 		// remove line returns
 		status = lineReturnRegex.ReplaceAllString(status, "")
@@ -50,21 +50,4 @@ func main() {
 
 		fmt.Println(status)
 	}
-}
-
-func mpd() string {
-	output, err := exec.Command("mpc").Output()
-	if err != nil {
-		return "Error executing mpc. Is it installed?"
-	}
-	return string(output)
-
-}
-
-type i3Workspace struct {
-	num     int
-	name    string
-	visible bool
-	focused bool
-	urgent  bool
 }
