@@ -11,7 +11,6 @@ import (
 	"muse-status/volume"
 	"muse-status/weather"
 	"muse-status/window"
-	"regexp"
 )
 
 func main() {

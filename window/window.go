@@ -5,6 +5,7 @@ import (
 	"muse-status/date"
 	"strings"
 	"os/exec"
+	"time"
 )
 
 // StartWindowBroadcast returns a string channel that is fed info about the
@@ -14,7 +15,16 @@ func StartWindowBroadcast() chan string {
 	channel := make(chan string)
 
 	go func() {
+		var lastWindow string;
+		for {
+			currentWindow := window();
+			if (lastWindow != currentWindow) {
+				channel <- currentWindow;
+				lastWindow = currentWindow;
+			}
 
+			time.Sleep(time.Second / 10);
+		}
 	}()
 
 	return channel
