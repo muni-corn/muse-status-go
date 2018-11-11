@@ -27,7 +27,6 @@ func main() {
 
 	var battery, date, mpd, network, volume, brightness, weather, window string
 
-	lineReturnRegex := regexp.MustCompile(`\r?\n`)
 	for {
 		select {
 		case battery = <-batteryChannel:
@@ -41,9 +40,6 @@ func main() {
 		}
 
 		status := window + format.Center(date+format.Separator()+weather+format.Separator()+mpd) + " " + format.Right(brightness+format.Separator()+volume+format.Separator()+network+format.Separator()+battery)
-
-		// remove line returns
-		status = lineReturnRegex.ReplaceAllString(status, "")
 
 		// add left and right padding
 		status = format.Separator() + status + format.Separator()
