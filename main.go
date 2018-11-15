@@ -38,7 +38,7 @@ func main() {
 		case window = <-windowChannel:
 		}
 
-		status := window + format.Center(date+format.Separator()+weather+format.Separator()+mpd) + " " + format.Right(brightness+format.Separator()+volume+format.Separator()+network+format.Separator()+battery)
+		status := window + format.Center(format.Chain(date, weather, mpd)) + format.Right(format.Chain(brightness, volume, network, battery))
 
 		// add left and right padding
 		status = format.Separator() + status + format.Separator()

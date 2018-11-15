@@ -6,6 +6,24 @@ import (
 	"time"
 )
 
+// Chain chains status bites together, ensuring that there are no
+// awkward spaces between bites.
+func Chain(modules ...string) string {
+	// start with some space at the beginning
+	final := Separator()
+
+	for _, v := range modules {
+		// trim space at the ends
+		v = strings.TrimSpace(v)
+		if v != "" {
+			// add space between modules
+			final += v + Separator()
+		}
+	}
+
+	return final
+}
+
 // Left aligns the original string to the left
 func Left(original string) string {
 	return "%{l}" + original
