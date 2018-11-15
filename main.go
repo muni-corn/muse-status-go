@@ -41,7 +41,7 @@ func main() {
 		status := window + format.Center(format.Chain(date, weather, mpd)) + format.Right(format.Chain(brightness, volume, network, battery))
 
 		// add left and right padding
-		status = format.Separator() + status + format.Separator()
+		status = format.Separator() + status
 
 		fmt.Println(status)
 	}

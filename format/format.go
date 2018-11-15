@@ -10,18 +10,18 @@ import (
 // awkward spaces between bites.
 func Chain(modules ...string) string {
 	// start with some space at the beginning
-	final := Separator()
+	var final string
 
 	for _, v := range modules {
 		// trim space at the ends
 		v = strings.TrimSpace(v)
 		if v != "" {
 			// add space between modules
-			final += v + Separator()
+			final += Separator() + v 
 		}
 	}
 
-	return final
+	return final + Separator()
 }
 
 // Left aligns the original string to the left
