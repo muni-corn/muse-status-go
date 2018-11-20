@@ -82,7 +82,13 @@ func getInfo() (title string, artist string, state playerState, err error) {
 	title = split[0]
 	artist = split[1]
 
-	rawPlayState := statusRegex.FindStringSubmatch(split[2])[1] // should be 'on' or 'off'. if it's not, then wtf
+	playStateSlice := statusRegex.FindStringSubmatch(split[2])
+
+	if len(playStateSlice) < 2 {
+		err = errors.New("There was an issue with MPD")
+	}
+
+	rawPlayState := playStateSlice[1] // should be 'on' or 'off'. if it's not, then wtf
 	println(rawPlayState)
 	switch rawPlayState {
 	case "playing":
