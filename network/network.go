@@ -44,7 +44,7 @@ func getWifi() string {
 	// TODO error checking
 
 	output, err := exec.Command("bash", "-c", statusCmd).Output()
-	if (err != nil) {
+	if err != nil {
 		return "Error getting connection status"
 	}
 
@@ -74,7 +74,7 @@ func getWifi() string {
 		} else if !strings.Contains(stringToUse, "disconnected") {
 			// make sure we're not disconnected from wifi
 			signalOuput, err := exec.Command("bash", "-c", signalCmd).Output()
-			if (err != nil) {
+			if err != nil {
 				return "Error fetching signal"
 			}
 
@@ -83,12 +83,12 @@ func getWifi() string {
 			signalStr := regex.ReplaceAllString(strings.Split(string(signalOuput), ":")[1], "")
 			signal, err := strconv.Atoi(signalStr)
 
-			if (err != nil) {
+			if err != nil {
 				return format.Dim("Error parsing signal")
 			}
 
 			// get the icon
-			iconIndex := len(connectionIcons)*signal/100
+			iconIndex := len(connectionIcons) * signal / 100
 
 			// constrains index
 			if iconIndex >= len(connectionIcons) {
@@ -97,7 +97,7 @@ func getWifi() string {
 
 			icon := connectionIcons[iconIndex]
 			return string(icon) + "  " + ssid
-		} 
+		}
 		// if none of the above, we're disconnected
 		return format.Dim(string(disconnectedIcon))
 	}
