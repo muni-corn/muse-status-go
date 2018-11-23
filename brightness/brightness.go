@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"muse-status/utils"
 )
 
 const (
@@ -74,27 +75,15 @@ func StartBrightnessBroadcast() chan string {
 }
 
 func getMaxBrightness() (value int, err error) {
-	output, err := ioutil.ReadFile(baseDir + card + "/max_brightness")
-	if err != nil {
-		value = 0
-	} else {
-		value, err = strconv.Atoi(strings.TrimSpace(string(output)))
-	}
-	return
+	return utils.GetIntFromFile(baseDir + card + "/max_brightness")
 }
 
 func getCurrentBrightness() (value int, err error) {
-	output, err := ioutil.ReadFile(baseDir + card + "/brightness")
-	if err != nil {
-		value = 0
-	} else {
-		value, err = strconv.Atoi(strings.TrimSpace(string(output)))
-	}
-	return
+	return utils.GetIntFromFile(baseDir + card + "/brightness")
 }
 
 func getIcon(percentage int) rune {
-	index := percentage*len(brightnessIcons)/100
+	index := percentage * len(brightnessIcons) / 100
 
 	// constrain index (should never go below zero)
 	if index >= len(brightnessIcons) {
