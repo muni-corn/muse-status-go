@@ -17,7 +17,7 @@ func Chain(modules ...string) string {
 		v = strings.TrimSpace(v)
 		if v != "" {
 			// add space between modules
-			final += Separator() + v 
+			final += Separator() + v
 		}
 	}
 
@@ -59,10 +59,11 @@ func FadeToDim(original string, interpolation float32) string {
 		interpolation = 1
 	}
 
-	// reverse
-	interpolation = 1 - interpolation
+	// quintic graph
+	x := interpolation * -1
+	y := x*x*x*x*x + 1
 
-	hex := ByteToHex(255/2 + int(interpolation*255/2))
+	hex := ByteToHex(255/2 + int(y*255/2))
 	return "%{F#" + hex + "FFFFFF}" + original + "%{F-}"
 }
 

@@ -32,6 +32,7 @@ func StartVolumeBroadcast() chan string {
 			// check for an error
 			if err != nil {
 				channel <- format.Dim("Error getting volume: " + err.Error())
+				break;
 			} else {
 				// if the brightness has changed
 				if current != lastVolume {
@@ -60,9 +61,9 @@ func StartVolumeBroadcast() chan string {
 						status = string(getIcon(current)) + "  " + strconv.Itoa(current) + "%"
 					}
 					channel <- format.FadeToDim(status, interpolation)
-					time.Sleep(time.Second / 15)
+					time.Sleep(time.Second / 20)
 				} else {
-					time.Sleep(time.Second / 4)
+					time.Sleep(time.Second / 5)
 				}
 			}
 		}

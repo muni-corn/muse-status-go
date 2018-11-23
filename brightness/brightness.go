@@ -14,7 +14,7 @@ const (
 
 var (
 	brightnessIcons = [6]rune{'', '', '', '', '', ''}
-	card            = "intel_backlight"
+	card            = "amdgpu_bl0"
 )
 
 // StartBrightnessBroadcast returns a string channel that is fed screen
@@ -30,7 +30,7 @@ func StartBrightnessBroadcast() chan string {
 
 		// if there's an error, fohgetaboutit
 		if err != nil {
-			panic(err)
+			channel <- ""
 		}
 
 		// loop
@@ -62,9 +62,9 @@ func StartBrightnessBroadcast() chan string {
 					interpolation = float32(now - lastChangeTime) / float32(int(time.Second) * 2)
 					status := string(getIcon(brightnessPercentage)) + "  " + strconv.Itoa(brightnessPercentage) + "%"
 					channel <- format.FadeToDim(status, interpolation)
-					time.Sleep(time.Second / 15)
+					time.Sleep(time.Second / 20)
 				} else {
-					time.Sleep(time.Second / 4)
+					time.Sleep(time.Second / 5)
 				}
 			}
 		}
