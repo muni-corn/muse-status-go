@@ -104,14 +104,27 @@ func getMainInfo(status ChargeStatus, percentage int) string {
 
 // returns the battery icon
 func getBatteryIcon(status ChargeStatus, percentage int) string {
+	// get indices
+	chargingIndex := int((float32(percentage)/100)*float32(len(chargingIcons)))
+	dischargingIndex := int((float32(percentage)/100)*float32(len(dischargingIcons)))
+
+	// constrain indices (but theoretically they should
+	// never drop below zero)
+	if chargingIndex >= len(chargingIcons) {
+		chargingIndex = len(chargingIcons) - 1
+	}
+	if dischargingIndex >= len(dischargingIcons) {
+		dischargingIndex = len(dischargingIcons) - 1
+	}
+
 	// get the battery icon
 	var icon rune
 	switch status {
 	case Charging:
 		// this is hell
-		icon = chargingIcons[int((float32(percentage)/100)*float32(len(chargingIcons)))]
+		icon = chargingIcons[chargingIndex]
 	case Discharging:
-		icon = dischargingIcons[int((float32(percentage)/100)*float32(len(dischargingIcons)))]
+		icon = dischargingIcons[dischargingIndex]
 	case Full:
 		icon = chargingIcons[len(chargingIcons)-1]
 	}
