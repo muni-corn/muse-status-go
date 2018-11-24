@@ -1,10 +1,8 @@
 package brightness
 
 import (
-	"io/ioutil"
 	"muse-status/format"
 	"strconv"
-	"strings"
 	"time"
 	"muse-status/utils"
 )
