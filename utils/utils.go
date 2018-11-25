@@ -6,8 +6,8 @@ import (
 	"strings"
 )
 
-// GetIntFromFile returns the first number in a 
-// file
+// GetIntFromFile parses the first line of a file into an
+// integer.
 func GetIntFromFile(filepath string) (value int, err error) {
 	output, err := ioutil.ReadFile(filepath)
 	if err == nil {
