@@ -4,7 +4,6 @@ package sbattery
 
 import (
 	"muse-status/format"
-	"muse-status/utils"
 	"os/exec"
 	"regexp"
 	"strconv"
