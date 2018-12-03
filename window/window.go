@@ -38,7 +38,7 @@ func StartWindowBroadcast() chan string {
 func window() string {
 	cmdOutput, err := exec.Command("xdotool", "getwindowfocus", "getwindowname").Output()
 	if err != nil {
-		return "Error executing xdotool. Is it installed?"
+		return ""
 	}
 		
 	output := string(cmdOutput)

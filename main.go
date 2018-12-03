@@ -5,6 +5,7 @@ import (
 	"muse-status/brightness"
 	"muse-status/date"
 	"muse-status/format"
+	"muse-status/i3"
 	"muse-status/mpd"
 	"muse-status/network"
 	"muse-status/sbattery"
@@ -22,9 +23,10 @@ func main() {
 	brightnessChannel := brightness.StartBrightnessBroadcast()
 	weatherChannel := weather.StartWeatherBroadcast()
 	mpdChannel := mpd.StartMPDBroadcast()
+	i3Channel := i3.StartI3Broadcast()
 	windowChannel := window.StartWindowBroadcast()
 
-	var battery, date, mpd, network, volume, brightness, weather, window string
+	var battery, date, i3, mpd, network, volume, brightness, weather, window string
 
 	for {
 		select {
@@ -36,9 +38,12 @@ func main() {
 		case weather = <-weatherChannel:
 		case mpd = <-mpdChannel:
 		case window = <-windowChannel:
+		case i3 = <-i3Channel:
 		}
 
-		status := window + format.Center(format.Chain(date, weather, mpd)) + format.Right(format.Chain(brightness, volume, network, battery))
+		status := format.Chain(i3, window) +
+			format.Center(format.Chain(date, weather, mpd)) +
+			format.Right(format.Chain(brightness, volume, network, battery))
 
 		// add left and right padding
 		status = format.Separator() + status
