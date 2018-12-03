@@ -9,15 +9,19 @@ import (
 // Chain chains status bites together, ensuring that there are no
 // awkward spaces between bites.
 func Chain(modules ...string) string {
-	// start with some space at the beginning
 	var final string
+	firstNonBlank := true
 
 	for _, v := range modules {
 		// trim space at the ends
 		v = strings.TrimSpace(v)
 		if v != "" {
-			// add space between modules
-			final += Separator() + v
+			if firstNonBlank {
+				final += v
+				firstNonBlank = false
+			} else {
+				final += Separator() + v
+			}
 		}
 	}
 
@@ -51,6 +55,10 @@ func Warning(original string) string {
 
 // WarningBlink slowly blinks the original string oranage
 func WarningBlink(original string) string {
+	if original == "" {
+		return ""
+	}
+
 	// convert unix nanoseconds to unix milliseconds
 	milliseconds := time.Now().UnixNano() / 1000000
 
@@ -71,6 +79,10 @@ func WarningBlink(original string) string {
 // FadeToDim colors the string according to interpolation from full white (0) to
 // dim (1)
 func FadeToDim(original string, interpolation float32) string {
+	if original == "" {
+		return ""
+	}
+
 	// constrain
 	if interpolation < 0 {
 		interpolation = 0
@@ -88,6 +100,10 @@ func FadeToDim(original string, interpolation float32) string {
 
 // Alert blinks the original string red
 func Alert(original string) string {
+	if original == "" {
+		return ""
+	}
+
 	// convert nanoseconds to milliseconds
 	milliseconds := time.Now().Nanosecond() / 1000000
 
