@@ -49,6 +49,25 @@ func Warning(original string) string {
 	return "%{F#FFAA00}" + original + "%{F-}"
 }
 
+// WarningBlink slowly blinks the original string oranage
+func WarningBlink(original string) string {
+	// convert unix nanoseconds to unix milliseconds
+	milliseconds := time.Now().UnixNano() / 1000000
+
+	// get alpha byte value
+	x := float32((milliseconds/2)%1000) / 1000
+	alpha := int(cubicEaseArc(x) * 255)
+
+	// limit alpha minimum to 50%
+	// we don't use math.Min because that would floop up the
+	// animation
+	alpha = alpha/2 + 255/2
+
+	hex := ByteToHex(alpha)
+
+	return "%{F#" + hex + "FFAA00}" + original + "%{F-}"
+}
+
 // FadeToDim colors the string according to interpolation from full white (0) to
 // dim (1)
 func FadeToDim(original string, interpolation float32) string {
