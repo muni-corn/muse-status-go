@@ -45,7 +45,7 @@ func Right(original string) string {
 
 // Dim apples a half-transparent white color to the original string
 func Dim(original string) string {
-	return "%{F#80FFFFFF}" + original + "%{F-}"
+	return "%{F#A0FFFFFF}" + original + "%{F-}"
 }
 
 // Warning renders the original string orange
@@ -94,7 +94,7 @@ func FadeToDim(original string, interpolation float32) string {
 	x := interpolation * -1
 	y := x*x*x*x*x + 1
 
-	hex := ByteToHex(255/2 + int(y*255/2))
+	hex := ByteToHex(0xa0 + int(y*(0xff - 0xa0)))
 	return "%{F#" + hex + "FFFFFF}" + original + "%{F-}"
 }
 
