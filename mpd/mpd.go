@@ -1,103 +1,139 @@
 package mpd
 
 import (
-	"errors"
-	"muse-status/format"
-	"os/exec"
-	"regexp"
-	"time"
+    "muse-status/format"
+    "regexp"
+    "time"
+    "github.com/fhs/gompd/mpd"
 )
 
 type playerState int
 
 const (
-	stopped playerState = iota
-	playing
-	paused
+    stopped playerState = iota
+    playing
+    paused
 )
 
 const (
-	playingIcon = ''
-	pausedIcon  = ''
+    playingIcon = ''
+    pausedIcon  = ''
 )
 
 var (
-	lineSplitRegex = regexp.MustCompile(`\r?\n`)
-	statusRegex    = regexp.MustCompile(`\[([A-z]*?)\]`) // matches words within brackets (get first capturing group)
-	mpcCmd         = []string{"mpc", "-f", `%title%\n%albumartist%`}
+    lineSplitRegex = regexp.MustCompile(`\r?\n`)
+    statusRegex    = regexp.MustCompile(`\[([A-z]*?)\]`) // matches words within brackets (get first capturing group)
 )
 
 // StartMPDBroadcast returns a string channel that is fed information about any
 // current media that is playing from an mpd server
 func StartMPDBroadcast() chan string {
-	channel := make(chan string)
+    channel := make(chan string)
 
-	go func() {
-		var lastStatus string
+    // create a watcher for mpd; the player subsystem.
+    // this will help us to know when changes are made
+    // to the current song. if creating the watcher
+    // results in an error, we'll display and error and
+    // terminate this module
+    watcher, err := mpd.NewWatcher("tcp", "localhost:6600", "")
+    if err != nil {
+        println("Couldn't create mpd watcher")
+        channel <- format.Dim("Couldn't connect to mpd. Error will dismiss in 10 seconds.")
+        time.Sleep(time.Second * 10);
+        channel <- ""
+        return nil
+    }
 
-		for {
-			title, artist, state, err := getInfo()
+    // start a client for mpd. if we fail to create one,
+    // quit
+    mpdClient, err := mpd.Dial("tcp", "localhost:6600")
+    if err != nil {
+        println("Couldn't start mpd client")
+        channel <- "Couldn't start mpd client. Error will dismiss in 10 seconds."
+        time.Sleep(time.Second * 10);
+        channel <- ""
+        return nil
+    }
 
-			var status string
-			if err != nil {
-				status = ""
-			} else {
-				song := title + "  " + format.Dim(artist)
+    go func() {
+        defer watcher.Close()
+        defer mpdClient.Close()
+        for err := range watcher.Error{
+            // if error, display it for five seconds,
+            // then continue
+            channel <- format.Dim(err.Error())
+            time.Sleep(time.Second * 5)
+            continue
+        }
+    }()
 
-				switch state {
-				case playing:
-					status = string(playingIcon) + "  " + song
-				case paused:
-					status = string(pausedIcon) + "  " + song
-				case stopped:
-					status = ""
-				}
-			}
+    go func() {
+        defer watcher.Close()
+        defer mpdClient.Close()
 
-			if lastStatus != status {
-				channel <- status
-				lastStatus = status
-			}
-			
-			time.Sleep(time.Second / 5)
-		}
-	}()
+        title, artist, state, err := getInfo(mpdClient)
+        updateChannel(title, artist, state, channel)
+        for range watcher.Event {
+            title, artist, state, err = getInfo(mpdClient)
+            if err != nil {
+                // TODO DRY
+                // if error, display it for five seconds,
+                // then continue
+                channel <- format.Alert(err.Error())
+                time.Sleep(time.Second * 5)
+                channel <- ""
+                continue
+            }
 
-	return channel
+            updateChannel(title, artist, state, channel)
+        }
+    }()
+
+    return channel
 }
 
-func getInfo() (title string, artist string, state playerState, err error) {
-	output, err := exec.Command("mpc", "-f", `%title%\n%albumartist%`).Output()
-	if err != nil {
-		return
-	}
+func updateChannel(title, artist string, state playerState, channel chan string) {
+    var status string
 
-	split := lineSplitRegex.Split(string(output), -1)
+    // if no error, then feed the current song
+    // and state to the channel
+    song := title + "  " + format.Dim(artist)
 
-	if len(split) < 3 {
-		err = errors.New("Nothing is in mpd's playlist")
-		return
-	}
+    switch state {
+    case playing:
+        status = string(playingIcon) + "  " + song
+    case paused:
+        status = string(pausedIcon) + "  " + song
+    case stopped:
+        status = ""
+    }
 
-	title = split[0]
-	artist = split[1]
+    channel <- status
+}
 
-	playStateSlice := statusRegex.FindStringSubmatch(split[2])
+func getInfo(client *mpd.Client) (title string, artist string, state playerState, err error) {
+    currentSong, err := client.CurrentSong()
+    if err != nil {
+        return
+    }
 
-	if len(playStateSlice) < 2 {
-		err = errors.New("There was an issue with MPD")
-	}
+    mpdStatus, err := client.Status()
+    if err != nil {
+        return
+    }
 
-	rawPlayState := playStateSlice[1] // should be 'on' or 'off'. if it's not, then wtf
-	println(rawPlayState)
-	switch rawPlayState {
-	case "playing":
-		state = playing
-	case "paused":
-		state = paused
-	case "stopped":
-		state = stopped
-	}
+    title = currentSong["Title"]
+    artist = currentSong["AlbumArtist"]
 
-	return
+    rawPlayState := mpdStatus["state"]
+    switch rawPlayState {
+    case "play":
+        state = playing
+    case "pause":
+        state = paused
+    case "stop":
+        state = stopped
+    }
+
+    return
 }
