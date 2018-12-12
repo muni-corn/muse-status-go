@@ -64,7 +64,7 @@ func getWifi() string {
 		return ""
 	}
 
-	enabled := strings.Contains(stringToUse, "connect")
+	enabled := strings.Contains(stringToUse, "connect") || strings.Contains(stringToUse, "unavailable")
 
 	if enabled {
 		ssid := strings.Split(stringToUse, ":")[2]
