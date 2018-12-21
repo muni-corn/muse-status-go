@@ -21,6 +21,8 @@ var (
 	disabledIcon     = '來'
 )
 
+// StartNetworkBroadcast returns a string channel that is
+// fed network information
 func StartNetworkBroadcast() chan string {
 	channel := make(chan string)
 
@@ -64,9 +66,7 @@ func getWifi() string {
 		return ""
 	}
 
-	enabled := strings.Contains(stringToUse, "connect") || strings.Contains(stringToUse, "unavailable")
-
-	if enabled {
+	if enabled := strings.Contains(stringToUse, "connect"); enabled {
 		ssid := strings.Split(stringToUse, ":")[2]
 		if strings.Contains(stringToUse, "connecting") {
 			// see if we're connecting
@@ -75,7 +75,7 @@ func getWifi() string {
 			// make sure we're not disconnected from wifi
 			signalOuput, err := exec.Command("bash", "-c", signalCmd).Output()
 			if err != nil {
-				return "Error fetching signal"
+				return format.Dim(string(disconnectedIcon))
 			}
 
 			// get ssid and signal strength
