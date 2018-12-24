@@ -38,10 +38,7 @@ func StartMPDBroadcast() chan string {
     watcher, err := mpd.NewWatcher("tcp", "localhost:6600", "")
     if err != nil {
         println("Couldn't create mpd watcher")
-        channel <- format.Dim("Couldn't connect to mpd. Error will dismiss in 10 seconds.")
-        time.Sleep(time.Second * 10);
-        channel <- ""
-        return nil
+        return channel
     }
 
     // start a client for mpd. if we fail to create one,
@@ -49,10 +46,7 @@ func StartMPDBroadcast() chan string {
     mpdClient, err := mpd.Dial("tcp", "localhost:6600")
     if err != nil {
         println("Couldn't start mpd client")
-        channel <- "Couldn't start mpd client. Error will dismiss in 10 seconds."
-        time.Sleep(time.Second * 10);
-        channel <- ""
-        return nil
+        return channel
     }
 
     go func() {
