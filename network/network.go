@@ -47,7 +47,8 @@ func getWifi() string {
 
 	output, err := exec.Command("bash", "-c", statusCmd).Output()
 	if err != nil {
-		return "Error getting connection status"
+		println("Error getting connection status");
+		return "";
 	}
 
 	strOutput := string(output)
@@ -84,7 +85,8 @@ func getWifi() string {
 			signal, err := strconv.Atoi(signalStr)
 
 			if err != nil {
-				return format.Dim("Error parsing signal")
+				println("Error parsing signal")
+				return string(disconnectedIcon) + "  " + ssid
 			}
 
 			// get the icon
