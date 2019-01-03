@@ -40,6 +40,8 @@ func StartMPDBroadcast() chan string {
             watcher, err := mpd.NewWatcher("tcp", "localhost:6600", "")
             if err != nil {
                 println("Couldn't create mpd watcher")
+                time.Sleep(time.Second)
+                continue
             }
 
             // start a client for mpd. if we fail to create one,
@@ -47,31 +49,34 @@ func StartMPDBroadcast() chan string {
             mpdClient, err := mpd.Dial("tcp", "localhost:6600")
             if err != nil {
                 println("Couldn't start mpd client")
+                time.Sleep(time.Second)
+                continue
             }
 
-            defer watcher.Close()
-            defer mpdClient.Close()
+            if watcher != nil && mpdClient != nil {
+                defer watcher.Close()
+                defer mpdClient.Close()
 
-            title, artist, state, err := getInfo(mpdClient)
-            updateChannel(title, artist, state, channel)
-            for range watcher.Event {
-                title, artist, state, err = getInfo(mpdClient)
-                if err != nil {
-                    // if error, log it
-                    println(err.Error())
-                    continue
-                }
-
+                title, artist, state, err := getInfo(mpdClient)
                 updateChannel(title, artist, state, channel)
+                for range watcher.Event {
+                    title, artist, state, err = getInfo(mpdClient)
+                    if err != nil {
+                        // if error, log it
+                        println(err.Error())
+                        break
+                    }
+
+                    updateChannel(title, artist, state, channel)
+                }
             }
 
-            // $20 says we'll remove this line
-            channel <- "MPD client crashed. One sec while we recover..."
+            // $20 says i'll remove this line
+            channel <- format.Dim(string(playingIcon) + "  " + ">.<  MPD client crashed! Recovering...")
 
             time.Sleep(time.Second * 2)
         }
     }()
-
 
     return channel
 }
