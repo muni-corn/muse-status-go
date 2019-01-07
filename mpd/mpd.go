@@ -32,6 +32,15 @@ func StartMPDBroadcast() chan string {
 
     go func() {
         for {
+            // start a client for mpd. if we fail to create one,
+            // quit
+            mpdClient, err := mpd.Dial("tcp", "localhost:6600")
+            if err != nil {
+                println("Couldn't start mpd client")
+                time.Sleep(time.Second)
+                continue
+            }
+
             // create a watcher for mpd; the player subsystem.
             // this will help us to know when changes are made
             // to the current song. if creating the watcher
@@ -40,15 +49,6 @@ func StartMPDBroadcast() chan string {
             watcher, err := mpd.NewWatcher("tcp", "localhost:6600", "")
             if err != nil {
                 println("Couldn't create mpd watcher")
-                time.Sleep(time.Second)
-                continue
-            }
-
-            // start a client for mpd. if we fail to create one,
-            // quit
-            mpdClient, err := mpd.Dial("tcp", "localhost:6600")
-            if err != nil {
-                println("Couldn't start mpd client")
                 time.Sleep(time.Second)
                 continue
             }
