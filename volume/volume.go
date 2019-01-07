@@ -11,7 +11,7 @@ import (
 var (
 	volumeIcons     = [3]rune{'', '', ''}
 	muteIcon        = ''
-	percentageRegex = regexp.MustCompile(`\[(\d*?)%?\]`)      // matches the volume percentage as an int
+	percentageRegex = regexp.MustCompile(`\[(\d*?)%?\]`)  // matches the volume percentage as an int
 	onOffRegex      = regexp.MustCompile(`\[([A-z]*?)\]`) // matches 'on' or 'off' within square brackets
 )
 
@@ -31,8 +31,11 @@ func StartVolumeBroadcast() chan string {
 
 			// check for an error
 			if err != nil {
-				channel <- format.Dim("Error getting volume: " + err.Error())
-				break;
+				errMsg := "Error getting volume: " + err.Error()
+				println(errMsg)
+				lastVolume = -1
+				channel <- format.Dim(errMsg)
+				time.Sleep(2 * time.Second)
 			} else {
 				// if the brightness has changed
 				if current != lastVolume {
