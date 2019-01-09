@@ -2,6 +2,7 @@ package format
 
 import (
 	"strconv"
+	"fmt"
 	"strings"
 	"time"
 )
@@ -28,6 +29,13 @@ func Chain(modules ...string) string {
 	}
 
 	return final + Separator()
+}
+
+// Action returns the original text wrapped in a clickable
+// area
+func Action(action, original string) string {
+	s := fmt.Sprintf("%%{A:%s:}%s%%{A}", action, original)
+	return s
 }
 
 // Left aligns the original string to the left
