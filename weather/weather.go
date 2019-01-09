@@ -76,7 +76,10 @@ func StartWeatherBroadcast() chan string {
 }
 
 func getWeatherIcon(report fullWeatherReport) string {
-	return string(weatherIcons[report.Weather[0].Icon])
+    if icon, ok := weatherIcons[report.Weather[0].Icon]; ok {
+        return string(icon)
+    }
+	return string(weatherIcons["01d"])
 }
 
 func getWeatherString(report fullWeatherReport) string {
