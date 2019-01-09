@@ -12,9 +12,16 @@ import (
 	"muse-status/volume"
 	"muse-status/weather"
 	"muse-status/window"
+	"os"
 )
 
 func main() {
+	for k, v := range os.Args {
+		if v == "-S" {
+			format.SetSecondaryColor(os.Args[k+1])
+		}
+	}
+
 	// channels
 	batteryChannel := sbattery.StartSmartBatteryBroadcast()
 	dateChannel := date.StartDateBroadcast()

@@ -30,62 +30,51 @@ var (
 func StartMPDBroadcast() chan string {
     channel := make(chan string)
 
-    // create a watcher for mpd; the player subsystem.
-    // this will help us to know when changes are made
-    // to the current song. if creating the watcher
-    // results in an error, we'll display and error and
-    // terminate this module
-    watcher, err := mpd.NewWatcher("tcp", "localhost:6600", "")
-    if err != nil {
-        println("Couldn't create mpd watcher")
-        channel <- format.Dim("Couldn't connect to mpd. Error will dismiss in 10 seconds.")
-        time.Sleep(time.Second * 10);
-        channel <- ""
-        return nil
-    }
-
-    // start a client for mpd. if we fail to create one,
-    // quit
-    mpdClient, err := mpd.Dial("tcp", "localhost:6600")
-    if err != nil {
-        println("Couldn't start mpd client")
-        channel <- "Couldn't start mpd client. Error will dismiss in 10 seconds."
-        time.Sleep(time.Second * 10);
-        channel <- ""
-        return nil
-    }
-
     go func() {
-        defer watcher.Close()
-        defer mpdClient.Close()
-        for err := range watcher.Error{
-            // if error, display it for five seconds,
-            // then continue
-            channel <- format.Dim(err.Error())
-            time.Sleep(time.Second * 5)
-            continue
-        }
-    }()
-
-    go func() {
-        defer watcher.Close()
-        defer mpdClient.Close()
-
-        title, artist, state, err := getInfo(mpdClient)
-        updateChannel(title, artist, state, channel)
-        for range watcher.Event {
-            title, artist, state, err = getInfo(mpdClient)
+        for {
+            // start a client for mpd. if we fail to create one,
+            // quit
+            mpdClient, err := mpd.Dial("tcp", "localhost:6600")
             if err != nil {
-                // TODO DRY
-                // if error, display it for five seconds,
-                // then continue
-                channel <- format.Alert(err.Error())
-                time.Sleep(time.Second * 5)
-                channel <- ""
+                println("Couldn't start mpd client")
+                time.Sleep(time.Second)
                 continue
             }
 
-            updateChannel(title, artist, state, channel)
+            // create a watcher for mpd; the player subsystem.
+            // this will help us to know when changes are made
+            // to the current song. if creating the watcher
+            // results in an error, we'll display and error and
+            // terminate this module
+            watcher, err := mpd.NewWatcher("tcp", "localhost:6600", "")
+            if err != nil {
+                println("Couldn't create mpd watcher")
+                time.Sleep(time.Second)
+                continue
+            }
+
+            if watcher != nil && mpdClient != nil {
+                defer watcher.Close()
+                defer mpdClient.Close()
+
+                title, artist, state, err := getInfo(mpdClient)
+                updateChannel(title, artist, state, channel)
+                for range watcher.Event {
+                    title, artist, state, err = getInfo(mpdClient)
+                    if err != nil {
+                        // if error, log it
+                        println(err.Error())
+                        break
+                    }
+
+                    updateChannel(title, artist, state, channel)
+                }
+            }
+
+            // $20 says i'll remove this line
+            channel <- format.Dim(string(playingIcon) + "  " + ">.<  MPD client crashed! Recovering...")
+
+            time.Sleep(time.Second * 2)
         }
     }()
 

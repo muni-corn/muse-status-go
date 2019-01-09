@@ -2,9 +2,12 @@ package format
 
 import (
 	"strconv"
+	"fmt"
 	"strings"
 	"time"
 )
+
+var secondaryColor = "FFFFFF"
 
 // Chain chains status bites together, ensuring that there are no
 // awkward spaces between bites.
@@ -28,6 +31,13 @@ func Chain(modules ...string) string {
 	return final + Separator()
 }
 
+// Action returns the original text wrapped in a clickable
+// area
+func Action(action, original string) string {
+	s := fmt.Sprintf("%%{A:%s:}%s%%{A}", action, original)
+	return s
+}
+
 // Left aligns the original string to the left
 func Left(original string) string {
 	return "%{l}" + original
@@ -45,7 +55,7 @@ func Right(original string) string {
 
 // Dim apples a half-transparent white color to the original string
 func Dim(original string) string {
-	return "%{F#A0FFFFFF}" + original + "%{F-}"
+	return "%{F#C0" + secondaryColor + "}" + original + "%{F-}"
 }
 
 // Warning renders the original string orange
@@ -94,8 +104,8 @@ func FadeToDim(original string, interpolation float32) string {
 	x := interpolation * -1
 	y := x*x*x*x*x + 1
 
-	hex := ByteToHex(0xa0 + int(y*(0xff - 0xa0)))
-	return "%{F#" + hex + "FFFFFF}" + original + "%{F-}"
+	hex := ByteToHex(0xc0 + int(y*(0xff - 0xc0)))
+	return "%{F#" + hex + secondaryColor + "}" + original + "%{F-}"
 }
 
 // Alert blinks the original string red
@@ -145,4 +155,10 @@ func ByteToHex(value int) string {
 		return "00"
 	}
 	return strings.ToUpper(strconv.FormatInt(int64(value), 16))
+}
+
+// SetSecondaryColor sets the secondary (dim) color of
+// muse-status.
+func SetSecondaryColor(color string) {
+	secondaryColor = color;
 }
