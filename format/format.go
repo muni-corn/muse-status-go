@@ -104,7 +104,7 @@ func FadeToDim(original string, interpolation float32) string {
 	x := interpolation * -1
 	y := x*x*x*x*x + 1
 
-	color, err := interpolateColors("FF"+ secondaryColor, "FFFFFFFF", y)
+	color, err := interpolateColors("C0"+ secondaryColor, "FFFFFFFF", y)
 	if err != nil {
 		println(err.Error())
 		color = secondaryColor
