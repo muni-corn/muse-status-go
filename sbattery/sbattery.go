@@ -94,11 +94,11 @@ func getMainInfo(status ChargeStatus, percentage int) string {
 			return base
 		}
 	case Full:
-		return icon
+		return "\uf084"
 	}
 
 	// something's weird at this point
-	return "Unknown"
+	return "\uf091"
 }
 
 // returns the battery icon
