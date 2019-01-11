@@ -94,7 +94,7 @@ func getMainInfo(status ChargeStatus, percentage int) string {
 			return base
 		}
 	case Full:
-		return icon + " Full"
+		return icon
 	}
 
 	// something's weird at this point
