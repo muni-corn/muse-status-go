@@ -55,6 +55,6 @@ func main() {
 		// add left and right padding
 		status = format.Separator() + status
 
-		fmt.Println(status)
+		fmt.Print(status, "\r")
 	}
 }
