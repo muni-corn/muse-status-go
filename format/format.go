@@ -1,13 +1,13 @@
 package format
 
 import (
-	"strconv"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 )
 
-var secondaryColor = "FFFFFF"
+var secondaryColor = "FFFFFFFF"
 
 // Chain chains status bites together, ensuring that there are no
 // awkward spaces between bites.
@@ -100,12 +100,17 @@ func FadeToDim(original string, interpolation float32) string {
 		interpolation = 1
 	}
 
-	// quintic graph
+	// quintic graph. apparently this is backwards
 	x := interpolation * -1
 	y := x*x*x*x*x + 1
 
-	hex := ByteToHex(0xc0 + int(y*(0xff - 0xc0)))
-	return "%{F#" + hex + secondaryColor + "}" + original + "%{F-}"
+	color, err := interpolateColors("FF"+ secondaryColor, "FFFFFFFF", y)
+	if err != nil {
+		println(err.Error())
+		color = secondaryColor
+	}
+
+	return "%{F#" + color + "}" + original + "%{F-}"
 }
 
 // Alert blinks the original string red
@@ -141,6 +146,33 @@ func cubicEaseArc(x float32) float32 {
 	return cubic
 }
 
+func interpolateColors(first, second string, interpolation float32) (result string, err error) {
+	firstInt, err := strconv.ParseInt(first, 16, 64)
+	if err != nil {
+		return
+	}
+
+	secondInt, err := strconv.ParseInt(second, 16, 64)
+	if err != nil {
+		return
+	}
+
+	r1, r2 := firstInt&0xFF, secondInt&0xFF
+	g1, g2 := (firstInt>>8)&0xFF, (secondInt>>8)&0xFF
+	b1, b2 := (firstInt>>16)&0xFF, (secondInt>>16)&0xFF
+	a1, a2 := (firstInt>>24)&0xFF, (secondInt>>24)&0xFF
+
+	r := int(float32(r1)*(1-interpolation) + float32(r2)*interpolation)
+	g := int(float32(g1)*(1-interpolation) + float32(g2)*interpolation)
+	b := int(float32(b1)*(1-interpolation) + float32(b2)*interpolation)
+	a := int(float32(a1)*(1-interpolation) + float32(a2)*interpolation)
+
+	resultInt := a<<24 + b<<16 + g<<8 + r
+
+	result = strconv.FormatInt(int64(resultInt), 16)
+	return
+}
+
 // Separator returns 4 spaces as a separator between data
 func Separator() string {
 	return "    "
@@ -160,5 +192,10 @@ func ByteToHex(value int) string {
 // SetSecondaryColor sets the secondary (dim) color of
 // muse-status.
 func SetSecondaryColor(color string) {
-	secondaryColor = color;
+	switch {
+	case len(color) == 6:
+		secondaryColor = color
+	default:
+		println("Invalid secondary color. Defaulting to white.")
+	}
 }
