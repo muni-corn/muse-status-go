@@ -88,13 +88,14 @@ func getWorkspacesString(workspaces []i3.Workspace) (str string, urgency bool) {
 		}
 
 		displayStr := v.Name
+		action := "i3-msg workspace " + v.Name
 		if v.Urgent {
 			urgency = true
-			str += format.WarningBlink(displayStr)
+			str += format.Action(action, format.WarningBlink(displayStr))
 		} else if !v.Focused {
-			str += format.Dim(displayStr)
+			str += format.Action(action, format.Dim(displayStr))
 		} else {
-			str += displayStr
+			str += format.Action(action, displayStr)
 		}
 	}
 	return

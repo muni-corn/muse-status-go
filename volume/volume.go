@@ -55,7 +55,7 @@ func StartVolumeBroadcast() chan string {
 					// the brightness package. could be included in the
 					// FadeToDim function
 					now := time.Now().UnixNano()
-					interpolation = float32(now-lastChangeTime) / float32(int(time.Second)*2)
+					interpolation = float32(now-lastChangeTime) / float32(int(time.Second)*3)
 
 					var status string
 					if current < 0 {
