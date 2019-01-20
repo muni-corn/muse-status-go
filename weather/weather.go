@@ -17,6 +17,7 @@ const (
 	units                 = "imperial"
 	locationServicesURL   = "https://location.services.mozilla.com/v1/geolocate?key=geoclue"
 	openWeatherMapURL     = "http://api.openweathermap.org/data/2.5/weather?lat=%f&lon=%f&appid=%s&units=%s"
+    defaultIcon           = '\uf50f'
 )
 
 var (
@@ -57,7 +58,7 @@ func StartWeatherBroadcast() chan string {
 			}
 
 			report, err := getFullWeatherReport(loc)
-			if err != nil {
+			if err != nil || len(report.Weather) <= 0 {
 				println("Weather couldn't get a weather report. Retrying in 10 seconds.")
 				time.Sleep(time.Second * 10)
 				continue
@@ -76,13 +77,22 @@ func StartWeatherBroadcast() chan string {
 }
 
 func getWeatherIcon(report fullWeatherReport) string {
-    if icon, ok := weatherIcons[report.Weather[0].Icon]; ok {
+    if len(report.Weather) <= 0 {
+        return ""
+    }
+
+    iconString := report.Weather[0].Icon
+    if icon, ok := weatherIcons[iconString]; ok {
         return string(icon)
     }
-	return string(weatherIcons["01d"])
+	return iconString
 }
 
 func getWeatherString(report fullWeatherReport) string {
+    if len(report.Weather) <= 0 {
+        return ""
+    }
+
 	// basically round degrees to the nearest int and add the degree sign
 	degrees := strconv.Itoa(int(report.Main.Temp+0.5)) + "°"
 
