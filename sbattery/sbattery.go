@@ -94,7 +94,8 @@ func getMainInfo(status ChargeStatus, percentage int) string {
 			return base
 		}
 	case Full:
-		return "\uf084"
+		// no display if full
+		return ""
 	}
 
 	// something's weird at this point
@@ -120,12 +121,12 @@ func getBatteryIcon(status ChargeStatus, percentage int) string {
 	var icon rune
 	switch status {
 	case Charging:
-		// this is hell
 		icon = chargingIcons[chargingIndex]
 	case Discharging:
 		icon = dischargingIcons[dischargingIndex]
 	case Full:
-		icon = chargingIcons[len(chargingIcons)-1]
+		// no display if full
+		return ""
 	}
 
 	return string(icon)
