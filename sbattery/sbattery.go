@@ -30,6 +30,11 @@ var (
 	// battery icons
 	dischargingIcons = [11]rune{'\uf08e', '\uf07a', '\uf07b', '\uf07c', '\uf07d', '\uf07e', '\uf07f', '\uf080', '\uf081', '\uf082', '\uf079'}
 	chargingIcons    = [11]rune{'\uf89e', '\uf89b', '\uf086', '\uf087', '\uf088', '\uf89c', '\uf089', '\uf89d', '\uf08a', '\uf08b', '\uf085'}
+	unknownIcon = '\uf590'
+	// nerd font icons
+	// dischargingIcons = [11]rune{'\uf58d', '\uf579', '\uf57a', '\uf57b', '\uf57c', '\uf57d', '\uf57e', '\uf57f', '\uf580', '\uf581', '\uf578'}
+	// chargingIcons    = [11]rune{'\uf585', '\uf586', '\uf587', '\uf588', '\uf589', '\uf58a', '\uf584'}
+	// unknownIcon = '\uf590'
 )
 
 // StartSmartBatteryBroadcast returns a channel that transfers intelligent

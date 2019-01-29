@@ -18,6 +18,9 @@ const (
 const (
     playingIcon = ''
     pausedIcon  = ''
+    // nerd font icons
+    // playingIcon = '\uf387'
+    // pausedIcon  = '\uf38a'
 )
 
 var (

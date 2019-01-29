@@ -8,6 +8,7 @@ import (
 const (
 	timeFormat = "3:04 pm"
 	dateFormat = "Mon, Jan 2"
+    // icon = '\uf64f' // nerd font icon
 )
 
 // StartDateBroadcast creates a string channel that transmits the current date
@@ -29,7 +30,7 @@ func StartDateBroadcast() chan string {
 				dateString := now.Format("Mon, Jan 2")
 				
 				// output to channel
-				channel <- "\uf150  " + timeString + "  " + f.Dim(dateString)
+				channel <- string(icon) + "  " + timeString + "  " + f.Dim(dateString)
 
 				// if the time has changed, we're not changing again anytime
 				// soon. get number of seconds until next minute change and

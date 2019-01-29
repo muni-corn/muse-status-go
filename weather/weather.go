@@ -41,6 +41,27 @@ var (
 		"50d": '',
 		"50n": '',
 	}
+    // nerd font
+	// weatherIcons = map[string]rune{
+	// 	"01d": '\ue30d',
+	// 	"01n": '\ue32b',
+	// 	"02d": '\ue30c',
+	// 	"02n": '\ue379',
+	// 	"03d": '\ue302',
+	// 	"03n": '\ue37e',
+	// 	"04d": '\ue33d',
+	// 	"04n": '\ue33d',
+	// 	"09d": '\ue309',
+	// 	"09n": '\ue326',
+	// 	"10d": '\ue308',
+	// 	"10n": '\ue325',
+	// 	"11d": '\ue305',
+	// 	"11n": '\ue322',
+	// 	"13d": '\ue30a',
+	// 	"13n": '\ue327',
+	// 	"50d": '\ue303',
+	// 	"50n": '\ue313',
+	// }
 )
 
 // StartWeatherBroadcast returns a string channel that is fed weather

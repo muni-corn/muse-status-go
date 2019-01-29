@@ -13,6 +13,7 @@ const (
 
 var (
 	brightnessIcons = [6]rune{'', '', '', '', '', ''}
+	// brightnessIcons = [6]rune{'\uf5da', '\uf5db', '\uf5dc', '\uf5dd', '\uf5de', '\uf5df'} // nerd font icons
 	card            = "amdgpu_bl0"
 )
 
