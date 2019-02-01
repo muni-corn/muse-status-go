@@ -19,7 +19,7 @@ func StartI3Broadcast() chan string {
 		// initialize workspace string
 		workspaces, err := i3.GetWorkspaces()
 		if err != nil {
-			channel <- format.Dim("Couldn't initialize i3 module :(")
+			channel <- ""
 		}
 		workspacesStr, workspaceUrgency := getWorkspacesString(workspaces)
 
