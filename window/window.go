@@ -16,15 +16,17 @@ var (
 // StartWindowBroadcast returns a string channel that is fed info about the
 // current active window. If no window is active, it is fed a greeting or
 // information useful to the user.
-func StartWindowBroadcast() chan string {
-	channel := make(chan string)
+func StartWindowBroadcast() chan *format.ClassicBlock {
+	channel := make(chan *format.ClassicBlock)
+	block := &format.ClassicBlock{Name: "window", Instance: "window"}
 
 	go func() {
 		var lastWindow string;
 		for {
-			currentWindow := window();
+			currentWindow := window()
 			if (lastWindow != currentWindow) {
-				channel <- currentWindow;
+				block.PrimaryText = currentWindow
+				channel <- block;
 				lastWindow = currentWindow;
 			}
 
