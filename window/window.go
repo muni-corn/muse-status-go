@@ -40,7 +40,7 @@ func window() string {
 	if err != nil {
 		return ""
 	}
-		
+
 	output := string(cmdOutput)
 	if strings.Contains(output, "i3") {
 		output = date.GetGreeting()
