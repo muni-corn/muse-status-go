@@ -16,58 +16,53 @@ var (
 )
 
 // StartVolumeBroadcast returns a channel that is fed audio volume information
-func StartVolumeBroadcast() chan string {
-	channel := make(chan string)
+func StartVolumeBroadcast() chan *format.FadingBlock {
+	channel := make(chan *format.FadingBlock)
+	block := &format.FadingBlock{Name: "volume"}
 
 	go func() {
-		lastVolume := 0
-		lastChangeTime := int64(0)
-		interpolation := float32(0.0)
+		lastVolume := -2
 
 		// loop
 		for {
-			// get current volume percentage
+			// get current volume
 			current, err := getCurrentVolume()
 
-			// check for an error
+			// check for an error, continue if there is one
 			if err != nil {
-				errMsg := "Error getting volume: " + err.Error()
-				println(errMsg)
-				lastVolume = -1
-				channel <- format.Dim(errMsg)
+				println("Error getting volume: " + err.Error())
 				time.Sleep(2 * time.Second)
-			} else {
-				// if the brightness has changed
-				if current != lastVolume {
-					// current time
-					now := time.Now().UnixNano()
+				continue
+			} 
 
-					// update out-of-date data
-					lastChangeTime = now
-					lastVolume = current
-					interpolation = 0
-				}
+			// if the volume has changed
+			if current != lastVolume {
 
-				// animate
-				if interpolation < 1 {
-
-					// TODO getInterpolation(): in format? this is also used in
-					// the brightness package. could be included in the
-					// FadeToDim function
-					now := time.Now().UnixNano()
-					interpolation = float32(now-lastChangeTime) / float32(int(time.Second)*3)
-
-					var status string
-					if current < 0 {
-						status = string(muteIcon) + "  Muted"
-					} else {
-						status = string(getIcon(current)) + "  " + strconv.Itoa(current) + "%"
-					}
-					channel <- format.FadeToDim(status, interpolation)
-					time.Sleep(time.Second / 20)
+				var icon rune
+				var text string
+				if current < 0 {
+					icon = muteIcon
+					text = "Muted"
 				} else {
-					time.Sleep(time.Second / 5)
+					icon = getIcon(current)
+					text = strconv.Itoa(current) + "%"
 				}
+
+				block.Set(icon, text)
+				block.Trigger()
+				channel <- block
+
+				// update old data
+				lastVolume = current
+			} 
+
+			// animate
+			if block.Fading() {
+				// faster framerate
+				channel <- block
+				time.Sleep(time.Second / 20)
+			} else {
+				time.Sleep(time.Second / 5)
 			}
 		}
 	}()
@@ -80,7 +75,6 @@ func StartVolumeBroadcast() chan string {
 func getCurrentVolume() (percentage int, err error) {
 	output, err := exec.Command("amixer", "sget", "Master").Output()
 	if err != nil {
-		percentage = -2
 		return
 	}
 

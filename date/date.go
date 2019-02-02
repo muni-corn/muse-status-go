@@ -1,7 +1,7 @@
 package date
 
 import (
-	f "muse-status/format"
+	"muse-status/format"
 	"time"
 )
 
@@ -9,11 +9,14 @@ const (
 	timeFormat = "3:04 pm"
 	dateFormat = "Mon, Jan 2"
     // icon = '\uf64f' // nerd font icon
+    icon = '\uf150'
 )
 
 // StartDateBroadcast creates a string channel that transmits the current date
-func StartDateBroadcast() chan string {
-	channel := make(chan string)
+func StartDateBroadcast() chan *format.ClassicBlock {
+	channel := make(chan *format.ClassicBlock)
+    block := &format.ClassicBlock{Name: "date"}
+    block.Icon = icon
 
 	go func() {
 		var lastTimeString string
@@ -28,9 +31,12 @@ func StartDateBroadcast() chan string {
 
 			if timeString != lastTimeString {
 				dateString := now.Format("Mon, Jan 2")
+
+                block.PrimaryText = timeString
+                block.SecondaryText = dateString
 				
 				// output to channel
-				channel <- string(icon) + "  " + timeString + "  " + f.Dim(dateString)
+				channel <- block
 
 				// if the time has changed, we're not changing again anytime
 				// soon. get number of seconds until next minute change and

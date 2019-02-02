@@ -19,53 +19,56 @@ var (
 
 // StartBrightnessBroadcast returns a string channel that is fed screen
 // brightness information
-func StartBrightnessBroadcast() chan string {
-	channel := make(chan string)
+func StartBrightnessBroadcast() chan *format.FadingBlock {
+	channel := make(chan *format.FadingBlock)
+	block := &format.FadingBlock{Name: "brightness"}
 
 	go func() {
 		max, err := getMaxBrightness()
 		lastBrightness := 0
-		lastChangeTime := int64(0)
-		interpolation := float32(0.0)
 
-		// if there's an error, fohgetaboutit
 		if err != nil {
-			channel <- ""
+			println("Brightness encountered a fatal initialization error: ", err.Error())
+			return
 		}
 
 		// loop
 		for {
-			// get current brightness
+			// get current brightness (in whatever the heck
+			// units Linux uses, not a percentage)
 			current, err := getCurrentBrightness()
 
-			// check for an error
+			// check for an error, continue if there is one
 			if err != nil {
-				channel <- format.Dim("Error getting brightness")
+				println("Brightness encountered an error: ", err.Error())
+				time.Sleep(2 * time.Second)
+				continue
+			} 
+
+			// get the brightness percentage from 0 to 100
+			brightnessPercentage := current * 100 / max
+
+			// if the brightness has changed, update things
+			if brightnessPercentage != lastBrightness {
+				icon := getIcon(brightnessPercentage)
+				text := strconv.Itoa(brightnessPercentage) + "%"
+
+				block.Set(icon, text)
+				block.Trigger()
+				channel <- block
+
+				// update old data
+				lastBrightness = brightnessPercentage
+			}
+
+
+			// animate
+			if block.Fading() {
+				// faster framerate
+				channel <- block
+				time.Sleep(time.Second / 20)
 			} else {
-				// get the brightness percentage from 0 to 100
-				brightnessPercentage := current * 100 / max
-
-				// if the brightness has changed
-				if brightnessPercentage != lastBrightness {
-					// current time
-					now := time.Now().UnixNano()
-
-					// update out-of-date data
-					lastChangeTime = now
-					lastBrightness = brightnessPercentage
-					interpolation = 0
-				}
-
-				// animate
-				if interpolation < 1 {
-					now := time.Now().UnixNano()
-					interpolation = float32(now-lastChangeTime) / float32(int(time.Second)*3)
-					status := string(getIcon(brightnessPercentage)) + "  " + strconv.Itoa(brightnessPercentage) + "%"
-					channel <- format.FadeToDim(status, interpolation)
-					time.Sleep(time.Second / 20)
-				} else {
-					time.Sleep(time.Second / 5)
-				}
+				time.Sleep(time.Second / 5)
 			}
 		}
 	}()
