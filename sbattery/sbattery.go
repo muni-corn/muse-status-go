@@ -30,7 +30,7 @@ var (
 	// battery icons
 	dischargingIcons = [11]rune{'\uf08e', '\uf07a', '\uf07b', '\uf07c', '\uf07d', '\uf07e', '\uf07f', '\uf080', '\uf081', '\uf082', '\uf079'}
 	chargingIcons    = [11]rune{'\uf89e', '\uf89b', '\uf086', '\uf087', '\uf088', '\uf89c', '\uf089', '\uf89d', '\uf08a', '\uf08b', '\uf085'}
-	unknownIcon = '\uf590'
+	unknownIcon      = '\uf590'
 	// nerd font icons
 	// dischargingIcons = [11]rune{'\uf58d', '\uf579', '\uf57a', '\uf57b', '\uf57c', '\uf57d', '\uf57e', '\uf57f', '\uf580', '\uf581', '\uf578'}
 	// chargingIcons    = [11]rune{'\uf585', '\uf586', '\uf587', '\uf588', '\uf589', '\uf58a', '\uf584'}
@@ -39,12 +39,13 @@ var (
 
 // StartSmartBatteryBroadcast returns a channel that transfers intelligent
 // battery information
-func StartSmartBatteryBroadcast() chan string {
+func StartSmartBatteryBroadcast() chan *format.ClassicBlock {
 	// create a channel
-	channel := make(chan string)
+	channel := make(chan *format.ClassicBlock)
+	block := &format.ClassicBlock{Name: "sbattery"}
 
 	// start the broadcast to it (async)
-	go broadcast(channel)
+	go broadcast(block, channel)
 
 	// return the channel
 	return channel
@@ -52,66 +53,44 @@ func StartSmartBatteryBroadcast() chan string {
 
 // an async function that broadcasts battery information to the specified
 // channel
-func broadcast(channel chan string) string {
+func broadcast(block *format.ClassicBlock, channel chan *format.ClassicBlock) {
 	for {
-		status, alert := status()
-		channel <- status
-		if (alert) {
+		output, _ := exec.Command("acpi").Output()
+
+		status, percentage, timeDone := parseReading(string(output))
+
+		var urgency format.Urgency
+		if status == Full {
+			block.SetHidden(true)
+			goto output
+		} else if block.Hidden() {
+			block.SetHidden(false)
+		}
+
+		switch {
+		case percentage <= 15:
+			urgency = format.UrgencyAlarmPulse
+		case percentage <= 30:
+			urgency = format.UrgencyWarning
+		}
+
+		block.Set(urgency, getBatteryIcon(status, percentage), strconv.Itoa(percentage)+"%", getTimeRemainingString(status, timeDone))
+
+		output:
+		channel <- block
+		if (urgency == format.UrgencyAlarmPulse) {
 			time.Sleep(time.Second / 15)
 		} else {
-			time.Sleep(time.Second * 20)
+			time.Sleep(time.Second * 5)
 		}
 	}
-}
-
-func status() (string, bool) {
-	output, err := exec.Command("acpi").Output()
-	if err != nil {
-		return "Error executing acpi. Is it installed?", false
-	}
-	status, percentage, timeDone := parseReading(string(output))
-
-	timeString := getTimeRemainingString(status, timeDone)
-
-	finalOutput := getMainInfo(status, percentage) + timeString
-
-	return finalOutput, percentage <= 15
-}
-
-// returns a colored icon and percentage, the main info of this
-// module
-func getMainInfo(status ChargeStatus, percentage int) string {
-	// icone
-	icon := getBatteryIcon(status, percentage)
-
-	// base string
-	base := icon + " " + strconv.Itoa(percentage) + "%  "
-
-	switch status {
-	case Charging:
-		return base
-	case Discharging:
-		if percentage <= 15 {
-			return format.Alert(base)
-		} else if percentage <= 30 {
-			return format.Warning(base)
-		} else {
-			return base
-		}
-	case Full:
-		// no display if full
-		return ""
-	}
-
-	// something's weird at this point
-	return "\uf091"
 }
 
 // returns the battery icon
-func getBatteryIcon(status ChargeStatus, percentage int) string {
+func getBatteryIcon(status ChargeStatus, percentage int) rune {
 	// get indices
-	chargingIndex := int((float32(percentage)/100)*float32(len(chargingIcons)))
-	dischargingIndex := int((float32(percentage)/100)*float32(len(dischargingIcons)))
+	chargingIndex := int((float32(percentage) / 100) * float32(len(chargingIcons)))
+	dischargingIndex := int((float32(percentage) / 100) * float32(len(dischargingIcons)))
 
 	// constrain indices (but theoretically they should
 	// never drop below zero)
@@ -131,13 +110,13 @@ func getBatteryIcon(status ChargeStatus, percentage int) string {
 		icon = dischargingIcons[dischargingIndex]
 	case Full:
 		// no display if full
-		return ""
+		return '\000'
 	}
 
-	return string(icon)
+	return icon
 }
 
-// returns a dimmed string telling at which time the battery will be empty/full
+// returns a string telling at which time the battery will be empty/full
 // e.g. "full at 3:30 pm"
 func getTimeRemainingString(status ChargeStatus, timeDone time.Time) string {
 	if (status == Charging || status == Discharging) && !timeDone.IsZero() {
@@ -149,7 +128,7 @@ func getTimeRemainingString(status ChargeStatus, timeDone time.Time) string {
 			timeStringPrefix = "until "
 		}
 
-		return format.Dim(timeStringPrefix + timeDone.Format("3:04 pm"))
+		return timeStringPrefix + timeDone.Format("3:04 pm")
 	}
 	return ""
 }
@@ -240,7 +219,7 @@ C			// charging avg
 C0			|
 C1  		|
 C2			| charging values by percentage
-...			| 
+...			|
 C9			|
 
 D			// discharging avg
@@ -248,7 +227,7 @@ D0			|
 D1			|
 D2			| discharging avg values by hour of day
 ...			| (used for predicting nonexistent day-by-day values)
-D23			|			
+D23			|
 
 S0			| sunday
 S1			|
@@ -271,6 +250,6 @@ R0			// thursday
 F0			// friday
 ...
 
-A0			// saturday 
+A0			// saturday
 ...
 */

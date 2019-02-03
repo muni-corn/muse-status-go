@@ -37,7 +37,7 @@ func Chain(modules ...DataBlock) string {
 	final = modules[first].Output()
 
 	for i := first + 1; i < len(modules); i++ {
-		if modules[i] == nil {
+		if modules[i] == nil || modules[i].Hidden() {
 			continue
 		}
 		v := modules[i].Output()

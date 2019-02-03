@@ -44,7 +44,7 @@ func window() string {
 	}
 
 	output := string(cmdOutput)
-	if strings.Contains(output, "i3") {
+	if output == "i3" || strings.TrimSpace(output) == "" {
 		output = date.GetGreeting()
 	} else {
 		output = lineReturnRegex.ReplaceAllString(output, "")
