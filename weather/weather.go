@@ -103,14 +103,14 @@ func StartWeatherBroadcast() chan *format.ClassicBlock {
 
 func getWeatherIcon(report fullWeatherReport) rune {
     if len(report.Weather) <= 0 {
-        return '\u0000'
+        return ' '
     }
 
     iconString := report.Weather[0].Icon
     if icon, ok := weatherIcons[iconString]; ok {
         return icon
     }
-	return '\u0000'
+	return ' '
 }
 
 func getTemperatureString(report fullWeatherReport) string {

@@ -109,8 +109,10 @@ func getBatteryIcon(status ChargeStatus, percentage int) rune {
 	case Discharging:
 		icon = dischargingIcons[dischargingIndex]
 	case Full:
-		// no display if full
-		return '\000'
+		// no display if full (return space character; found
+		// that return the null character terminates i3bar's
+		// json and will cause a problem
+		return ' '
 	}
 
 	return icon
