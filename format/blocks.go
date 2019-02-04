@@ -43,6 +43,10 @@ const (
 
 // Output returns the ClassicBlock's output
 func (c *ClassicBlock) Output() string {
+    if c.hidden {
+        return ""
+    }
+
 	defaultColor := "ffffff"
 	switch c.Urgency {
 	case UrgencyLow:
@@ -57,9 +61,16 @@ func (c *ClassicBlock) Output() string {
 		defaultColor = alarmColor
 	}
 
-	icon := fmt.Sprintf(pangoTemplate, defaultColor, iconFont, string(c.Icon))
-	primary := fmt.Sprintf(pangoTemplate, defaultColor, textFont, c.PrimaryText)
-	secondary := fmt.Sprintf(pangoTemplate, secondaryColor+"c0", textFont, c.SecondaryText)
+    var icon, primary, secondary string
+    if c.Icon != '\x00' {
+        icon = fmt.Sprintf(pangoTemplate, defaultColor, iconFont, string(c.Icon))
+    }
+    if strings.TrimSpace(c.PrimaryText) != "" {
+        primary = fmt.Sprintf(pangoTemplate, defaultColor, textFont, c.PrimaryText)
+    }
+    if strings.TrimSpace(c.SecondaryText) != "" {
+        secondary = fmt.Sprintf(pangoTemplate, secondaryColor+"c0", textFont, c.SecondaryText)
+    }
 
 	shortText := strings.TrimSpace(fmt.Sprintf(twoStringTemplate, icon, primary))
 

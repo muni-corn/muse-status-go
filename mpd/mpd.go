@@ -17,7 +17,7 @@ const (
 
 const (
     playingIcon = '\uf387'
-    pausedIcon  = '\uf38a'
+    pausedIcon  = '\uf3e4'
     // nerd font icons
     // playingIcon = '\uf387'
     // pausedIcon  = '\uf38a'
