@@ -67,18 +67,20 @@ func broadcast(block *format.ClassicBlock, channel chan *format.ClassicBlock) {
 			block.SetHidden(false)
 		}
 
-		switch {
-		case percentage <= 15:
-			urgency = format.UrgencyAlarmPulse
-		case percentage <= 30:
-			urgency = format.UrgencyWarning
+		if status != Charging {
+			switch {
+			case percentage <= 15:
+				urgency = format.UrgencyAlarmPulse
+			case percentage <= 30:
+				urgency = format.UrgencyWarning
+			}
 		}
 
 		block.Set(urgency, getBatteryIcon(status, percentage), strconv.Itoa(percentage)+"%", getTimeRemainingString(status, timeDone))
 
-		output:
+	output:
 		channel <- block
-		if (urgency == format.UrgencyAlarmPulse) {
+		if urgency == format.UrgencyAlarmPulse {
 			time.Sleep(time.Second / 15)
 		} else {
 			time.Sleep(time.Second * 5)
