@@ -18,7 +18,8 @@ const (
 )
 
 var textFont, iconFont = "Fira Sans 10", "Material Design Icons 12"
-var secondaryColor = "cccccc"
+var primaryColor = "e0e0e0"
+var secondaryColor = "c0c0c0"
 var warningColor = "ffaa00"
 var alarmColor = "ff0000"
 var mode = ModeI3Bar
@@ -149,7 +150,7 @@ func FadeToDim(original string, interpolation float32) string {
 	x := interpolation * -1
 	y := x*x*x*x*x + 1
 
-	color, err := interpolateColors("C0"+secondaryColor, "FFFFFFFF", y)
+	color, err := interpolateColors("C0"+secondaryColor, "FF"+primaryColor, y)
 	if err != nil {
 		println(err.Error())
 		color = secondaryColor
@@ -254,7 +255,18 @@ func SetSecondaryColor(color string) {
 	case len(color) == 6:
 		secondaryColor = color
 	default:
-		println("Invalid secondary color. Defaulting to gray.")
+		println("invalid secondary color. defaulting to gray")
+	}
+}
+
+// SetPrimaryColor sets the primary color of
+// muse-status.
+func SetPrimaryColor(color string) {
+	switch {
+	case len(color) == 6:
+		primaryColor = color
+	default:
+		println("invalid primary color :(")
 	}
 }
 

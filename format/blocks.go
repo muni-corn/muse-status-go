@@ -47,7 +47,7 @@ func (c *ClassicBlock) Output() string {
         return ""
     }
 
-	defaultColor := "ffffff"
+	defaultColor := primaryColor
 	switch c.Urgency {
 	case UrgencyLow:
 		defaultColor = secondaryColor
@@ -140,7 +140,7 @@ func (f *FadingBlock) Output() string {
 		secondsPassed := float32(time.Now().Sub(f.LastUpdate)) / float32(time.Second)
 		x := secondsPassed / secondsThreshold
 		x = x * x * x * x * x // quintic interpolation
-		color, _ = interpolateColors("ffffffff", secondaryColor+"c0", x)
+		color, _ = interpolateColors(primaryColor+"ff", secondaryColor+"c0", x)
 		if secondsPassed > secondsThreshold {
 			f.fading = false
 		}

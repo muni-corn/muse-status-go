@@ -25,6 +25,8 @@ func main() {
 		switch v {
 		case "-S":
 			format.SetSecondaryColor(next)
+		case "-P":
+			format.SetPrimaryColor(next)
 		case "-M":
 			format.SetFormatMode(next)
 		case "-F":
