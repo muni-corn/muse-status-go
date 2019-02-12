@@ -206,17 +206,17 @@ func interpolateColors(first, second string, interpolation float32) (result stri
 		return
 	}
 
-	r1, r2 := firstInt&0xFF, secondInt&0xFF
-	g1, g2 := (firstInt>>8)&0xFF, (secondInt>>8)&0xFF
-	b1, b2 := (firstInt>>16)&0xFF, (secondInt>>16)&0xFF
 	a1, a2 := (firstInt>>24)&0xFF, (secondInt>>24)&0xFF
+	r1, r2 := (firstInt>>16)&0xFF, (secondInt>>16)&0xFF
+	g1, g2 := (firstInt>>8)&0xFF, (secondInt>>8)&0xFF
+	b1, b2 := firstInt&0xFF, secondInt&0xFF
 
-	r := int(float32(r1)*(1-interpolation) + float32(r2)*interpolation)
-	g := int(float32(g1)*(1-interpolation) + float32(g2)*interpolation)
-	b := int(float32(b1)*(1-interpolation) + float32(b2)*interpolation)
-	a := int(float32(a1)*(1-interpolation) + float32(a2)*interpolation)
+	a := int(float32(a1)*(1.0-interpolation) + float32(a2)*interpolation)
+	r := int(float32(r1)*(1.0-interpolation) + float32(r2)*interpolation)
+	g := int(float32(g1)*(1.0-interpolation) + float32(g2)*interpolation)
+	b := int(float32(b1)*(1.0-interpolation) + float32(b2)*interpolation)
 
-	resultInt := a<<24 + b<<16 + g<<8 + r
+	resultInt := a<<24 + r<<16 + g<<8 + b
 
 	result = strconv.FormatInt(int64(resultInt), 16)
 	return

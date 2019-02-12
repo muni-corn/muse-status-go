@@ -9,7 +9,7 @@ import (
 // DataBlock is a block of data in the status bar
 type DataBlock interface {
 	Output() string
-    Hidden() bool
+	Hidden() bool
 }
 
 // Urgency is a level of urgency applied to a block
@@ -32,20 +32,20 @@ type ClassicBlock struct {
 	PrimaryText   string
 	SecondaryText string
 	Urgency       Urgency
-	hidden       bool
+	hidden        bool
 }
 
 const (
 	jsonTemplate      = `{"name":"%s","full_text":"%s","short_text":"%s","markup":"pango","separator":true}`
-	pangoTemplate     = "<span color='#%s' font='%s'>%s</span>"
+	pangoTemplate     = `<span color=\"#%s\" font=\"%s\">%s</span>`
 	twoStringTemplate = "%s  %s"
 )
 
 // Output returns the ClassicBlock's output
 func (c *ClassicBlock) Output() string {
-    if c.hidden {
-        return ""
-    }
+	if c.hidden {
+		return ""
+	}
 
 	defaultColor := primaryColor
 	switch c.Urgency {
@@ -61,16 +61,16 @@ func (c *ClassicBlock) Output() string {
 		defaultColor = alarmColor
 	}
 
-    var icon, primary, secondary string
-    if c.Icon != '\x00' {
-        icon = fmt.Sprintf(pangoTemplate, defaultColor, iconFont, string(c.Icon))
-    }
-    if strings.TrimSpace(c.PrimaryText) != "" {
-        primary = fmt.Sprintf(pangoTemplate, defaultColor, textFont, c.PrimaryText)
-    }
-    if strings.TrimSpace(c.SecondaryText) != "" {
-        secondary = fmt.Sprintf(pangoTemplate, secondaryColor+"c0", textFont, c.SecondaryText)
-    }
+	var icon, primary, secondary string
+	if c.Icon != '\x00' {
+		icon = fmt.Sprintf(pangoTemplate, defaultColor, iconFont, string(c.Icon))
+	}
+	if strings.TrimSpace(c.PrimaryText) != "" {
+		primary = fmt.Sprintf(pangoTemplate, defaultColor, textFont, c.PrimaryText)
+	}
+	if strings.TrimSpace(c.SecondaryText) != "" {
+		secondary = fmt.Sprintf(pangoTemplate, secondaryColor+"c0", textFont, c.SecondaryText)
+	}
 
 	shortText := strings.TrimSpace(fmt.Sprintf(twoStringTemplate, icon, primary))
 
@@ -86,12 +86,12 @@ func (c *ClassicBlock) Output() string {
 
 // Hidden returns true if the ClassicBlock is hidden
 func (c *ClassicBlock) Hidden() bool {
-    return c.hidden
+	return c.hidden
 }
 
 // SetHidden sets the ClassicBlock's visibility
 func (c *ClassicBlock) SetHidden(h bool) {
-    c.hidden = h
+	c.hidden = h
 }
 
 // Set sets the most common parameters of the ClassicBlock.
@@ -111,7 +111,7 @@ type FadingBlock struct {
 	Text       string
 	LastUpdate time.Time
 	fading     bool
-	hidden    bool
+	hidden     bool
 }
 
 // Fading returns true if this FadingBlock is animating
@@ -136,11 +136,16 @@ const secondsThreshold = 3
 // Output returns the ClassicBlock's output
 func (f *FadingBlock) Output() string {
 	var color string
+    // var err error
 	if f.fading {
 		secondsPassed := float32(time.Now().Sub(f.LastUpdate)) / float32(time.Second)
 		x := secondsPassed / secondsThreshold
 		x = x * x * x * x * x // quintic interpolation
-		color, _ = interpolateColors(primaryColor+"ff", secondaryColor+"c0", x)
+        color, _ = interpolateColors(primaryColor+"ff", secondaryColor+"c0", x)
+        // if err != nil {
+        //     f.Text += "(err: " + err.Error() + ")"
+        // }
+
 		if secondsPassed > secondsThreshold {
 			f.fading = false
 		}
@@ -150,6 +155,7 @@ func (f *FadingBlock) Output() string {
 
 	icon := fmt.Sprintf(pangoTemplate, color, iconFont, string(f.Icon))
 	text := fmt.Sprintf(pangoTemplate, color, textFont, f.Text)
+	// text := fmt.Sprintf(pangoTemplate, color, textFont, f.Text + " (#" + color + ")")
 
 	shortText := icon
 	fullText := fmt.Sprintf(twoStringTemplate, shortText, text)
@@ -159,10 +165,10 @@ func (f *FadingBlock) Output() string {
 
 // Hidden returns true if the ClassicBlock is hidden
 func (f *FadingBlock) Hidden() bool {
-    return f.hidden
+	return f.hidden
 }
 
 // SetHidden sets the ClassicBlock's visibility
 func (f *FadingBlock) SetHidden(h bool) {
-    f.hidden = h
+	f.hidden = h
 }
