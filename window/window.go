@@ -1,8 +1,8 @@
 package window
 
 import (
-	"muse-status/format"
-	"muse-status/date"
+	"github.com/muni-corn/muse-status/format"
+	"github.com/muni-corn/muse-status/date"
 	"strings"
 	"os/exec"
 	"time"

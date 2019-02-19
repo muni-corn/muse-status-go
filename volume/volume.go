@@ -1,7 +1,7 @@
 package volume
 
 import (
-	"muse-status/format"
+	"github.com/muni-corn/muse-status/format"
 	"os/exec"
 	"regexp"
 	"strconv"

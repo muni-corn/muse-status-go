@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"muse-status/format"
+	"github.com/muni-corn/muse-status/format"
 	"net/http"
 	"strconv"
 	"time"

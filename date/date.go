@@ -1,7 +1,7 @@
 package date
 
 import (
-	"muse-status/format"
+	"github.com/muni-corn/muse-status/format"
 	"time"
 )
 

@@ -1,10 +1,10 @@
 package brightness
 
 import (
-	"muse-status/format"
+	"github.com/muni-corn/muse-status/format"
 	"strconv"
 	"time"
-	"muse-status/utils"
+	"github.com/muni-corn/muse-status/utils"
 )
 
 const (

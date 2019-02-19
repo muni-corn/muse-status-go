@@ -1,7 +1,7 @@
 package mpd
 
 import (
-    "muse-status/format"
+    "github.com/muni-corn/muse-status/format"
     "regexp"
     "time"
     "github.com/fhs/gompd/mpd"

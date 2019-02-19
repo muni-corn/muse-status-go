@@ -1,7 +1,7 @@
 package i3
 
 import (
-	"muse-status/format"
+	"github.com/muni-corn/muse-status/format"
 	"time"
 	"go.i3wm.org/i3"
 	"strings"

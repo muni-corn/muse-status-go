@@ -2,16 +2,16 @@ package main
 
 import (
 	"fmt"
-	"muse-status/brightness"
-	"muse-status/date"
-	"muse-status/format"
-	// "muse-status/i3"
-	"muse-status/mpd"
-	"muse-status/network"
-	"muse-status/sbattery"
-	"muse-status/volume"
-	"muse-status/weather"
-	// "muse-status/window"
+	"github.com/muni-corn/muse-status/brightness"
+	"github.com/muni-corn/muse-status/date"
+	"github.com/muni-corn/muse-status/format"
+//  "github.com/muni-corn/muse-status/i3"
+	"github.com/muni-corn/muse-status/mpd"
+	"github.com/muni-corn/muse-status/network"
+	"github.com/muni-corn/muse-status/sbattery"
+	"github.com/muni-corn/muse-status/volume"
+	"github.com/muni-corn/muse-status/weather"
+//	"github.com/muni-corn/muse-status/window"
 	"os"
 )
 
