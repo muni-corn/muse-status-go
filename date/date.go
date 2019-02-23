@@ -32,8 +32,7 @@ func StartDateBroadcast() chan *format.ClassicBlock {
 			if timeString != lastTimeString {
 				dateString := now.Format("Mon, Jan 2")
 
-                block.PrimaryText = timeString
-                block.SecondaryText = dateString
+                block.Set(format.UrgencyNormal, icon, timeString, dateString)
 				
 				// output to channel
 				channel <- block
@@ -68,7 +67,7 @@ func GetGreeting() string {
 	hour := time.Now().Hour()
 
 	switch {
-	case hour >= 4 && hour < 12:
+	case hour < 12:
 		return "Good morning!"
 	case hour >= 12 && hour < 17:
 		return "Good afternoon!"

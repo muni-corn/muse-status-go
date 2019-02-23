@@ -3,10 +3,12 @@ package window
 import (
 	"github.com/muni-corn/muse-status/format"
 	"github.com/muni-corn/muse-status/date"
+	// "bytes"
 	"strings"
 	"os/exec"
 	"time"
 	"regexp"
+	// "encoding/json"
 )
 
 var (
@@ -18,7 +20,7 @@ var (
 // information useful to the user.
 func StartWindowBroadcast() chan *format.ClassicBlock {
 	channel := make(chan *format.ClassicBlock)
-	block := &format.ClassicBlock{Name: "window", Instance: "window"}
+	block := &format.ClassicBlock{Name: "window"}
 
 	go func() {
 		var lastWindow string;
@@ -38,9 +40,10 @@ func StartWindowBroadcast() chan *format.ClassicBlock {
 }
 
 func window() string {
-	cmdOutput, err := exec.Command("xdotool", "getwindowfocus", "getwindowname").Output()
+	// get sway tree
+	cmdOutput, err := exec.Command("swaymsg", "-t", "get_tree").Output()
 	if err != nil {
-		return ""
+		return date.GetGreeting()
 	}
 
 	output := string(cmdOutput)

@@ -57,8 +57,7 @@ func (c *ClassicBlock) Output() string {
 		// TODO
 		defaultColor = warningColor
 	case UrgencyAlarmPulse:
-		// TODO
-		defaultColor = alarmColor
+		defaultColor = getAlarmPulseColor()
 	}
 
 	var icon, primary, secondary string
@@ -69,7 +68,7 @@ func (c *ClassicBlock) Output() string {
 		primary = fmt.Sprintf(pangoTemplate, defaultColor, textFont, c.PrimaryText)
 	}
 	if strings.TrimSpace(c.SecondaryText) != "" {
-		secondary = fmt.Sprintf(pangoTemplate, secondaryColor+"c0", textFont, c.SecondaryText)
+		secondary = fmt.Sprintf(pangoTemplate, secondaryColor, textFont, c.SecondaryText)
 	}
 
 	shortText := strings.TrimSpace(fmt.Sprintf(twoStringTemplate, icon, primary))
@@ -100,6 +99,21 @@ func (c *ClassicBlock) Set(urgency Urgency, icon rune, primaryText, secondaryTex
 	c.Urgency = urgency
 	c.PrimaryText = primaryText
 	c.SecondaryText = secondaryText
+}
+
+func getAlarmPulseColor() (color string) {
+	// convert nanoseconds to milliseconds
+	milliseconds := time.Now().Nanosecond() / 1000000
+
+	// get alpha byte value
+    interpolation := cubicEaseArc(float32(milliseconds)/1000)
+    
+    color, err := interpolateColors(secondaryColor, alarmColor + "ff", interpolation)
+    if err != nil {
+        color = alarmColor
+    }
+
+    return 
 }
 
 // FadingBlock is a DataBlock with an icon and text that are
@@ -136,22 +150,24 @@ const secondsThreshold = 3
 // Output returns the ClassicBlock's output
 func (f *FadingBlock) Output() string {
 	var color string
-    // var err error
+    var err error
 	if f.fading {
 		secondsPassed := float32(time.Now().Sub(f.LastUpdate)) / float32(time.Second)
 		x := secondsPassed / secondsThreshold
 		x = x * x * x * x * x // quintic interpolation
-        color, _ = interpolateColors(primaryColor+"ff", secondaryColor+"c0", x)
-        // if err != nil {
-        //     f.Text += "(err: " + err.Error() + ")"
-        // }
+        color, err = interpolateColors(primaryColor, secondaryColor, x)
+        if err != nil {
+            f.Text += "(err: " + err.Error() + ")"
+        }
 
 		if secondsPassed > secondsThreshold {
 			f.fading = false
 		}
 	} else {
-		color = secondaryColor + "c0"
+		color = secondaryColor
 	}
+
+    color = strings.ToUpper(color)
 
 	icon := fmt.Sprintf(pangoTemplate, color, iconFont, string(f.Icon))
 	text := fmt.Sprintf(pangoTemplate, color, textFont, f.Text)

@@ -18,8 +18,8 @@ const (
 )
 
 var textFont, iconFont = "Fira Sans 10", "Material Design Icons 12"
-var primaryColor = "e0e0e0"
-var secondaryColor = "c0c0c0"
+var primaryColor = "ffffffff"
+var secondaryColor = "ffffffc0"
 var warningColor = "ffaa00"
 var alarmColor = "ff0000"
 var mode = ModeI3Bar
@@ -218,7 +218,7 @@ func interpolateColors(first, second string, interpolation float32) (result stri
 
 	resultInt := a<<24 + r<<16 + g<<8 + b
 
-	result = strconv.FormatInt(int64(resultInt), 16)
+    result = fmt.Sprintf("%08x", resultInt)
 	return
 }
 
@@ -245,15 +245,17 @@ func ByteToHex(value int) string {
 	} else if value < 0 {
 		return "00"
 	}
-	return strings.ToUpper(strconv.FormatInt(int64(value), 16))
+	return strconv.FormatInt(int64(value), 16)
 }
 
 // SetSecondaryColor sets the secondary (dim) color of
 // muse-status.
 func SetSecondaryColor(color string) {
 	switch {
-	case len(color) == 6:
+	case len(color) == 8:
 		secondaryColor = color
+	case len(color) == 6:
+		secondaryColor = color + "ff"
 	default:
 		println("invalid secondary color. defaulting to gray")
 	}
@@ -263,10 +265,12 @@ func SetSecondaryColor(color string) {
 // muse-status.
 func SetPrimaryColor(color string) {
 	switch {
-	case len(color) == 6:
+	case len(color) == 8:
 		primaryColor = color
+	case len(color) == 6:
+		primaryColor = color + "ff"
 	default:
-		println("invalid primary color :(")
+		println("invalid primary color. defaulting to white")
 	}
 }
 
