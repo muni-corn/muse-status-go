@@ -31,9 +31,9 @@ func Chain(modules ...DataBlock) string {
 	var final string
 
 	// huh. increment first until we find a module that
-	// isn't nil (empty for loop)
+	// isn't nil or blank(empty for loop)
 
-	for first = 0; modules[first] == nil; first++ { }
+	for first = 0; modules[first] == nil || strings.TrimSpace(modules[first].Output()) == ""; first++ { }
 
 	final = modules[first].Output()
 
