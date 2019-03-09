@@ -5,7 +5,6 @@ import (
 	"github.com/muni-corn/muse-status/brightness"
 	"github.com/muni-corn/muse-status/date"
 	"github.com/muni-corn/muse-status/format"
-//  "github.com/muni-corn/muse-status/i3"
 	"github.com/muni-corn/muse-status/mpd"
 	"github.com/muni-corn/muse-status/network"
 	"github.com/muni-corn/muse-status/sbattery"
@@ -44,7 +43,6 @@ func main() {
 	volumeChannel := volume.StartVolumeBroadcast()
 	weatherChannel := weather.StartWeatherBroadcast()
 	mpdChannel := mpd.StartMPDBroadcast()
-	// i3Channel := i3.StartI3Broadcast()
 	// windowChannel := window.StartWindowBroadcast()
 
 	var battery, brightness, date, mpd, network, volume, weather format.DataBlock
@@ -64,7 +62,6 @@ func main() {
 		case weather = <-weatherChannel:
 		case mpd = <-mpdChannel:
 			// case window = <-windowChannel:
-			// case i3 = <-i3Channel:
 		}
 
 		var status string
