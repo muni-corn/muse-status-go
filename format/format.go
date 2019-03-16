@@ -47,7 +47,7 @@ func Chain(modules ...DataBlock) string {
 			continue
 		}
 		v := modules[i].Output()
-        v = strings.ReplaceAll(v, "&", `&amp;`) // espace ampersand for json
+        v = strings.ReplaceAll(v, "&", `&amp;`) // escape ampersand for json
 
 		// trim space at the ends
 		v = strings.TrimSpace(v)
