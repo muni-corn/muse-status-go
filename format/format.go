@@ -33,7 +33,12 @@ func Chain(modules ...DataBlock) string {
 	// huh. increment first until we find a module that
 	// isn't nil or blank(empty for loop)
 
-	for first = 0; modules[first] == nil || strings.TrimSpace(modules[first].Output()) == ""; first++ { }
+	for first = 0; first < len(modules) || modules[first] == nil || strings.TrimSpace(modules[first].Output()) == ""; first++ { }
+
+    // if everything is blank, return a blank string
+    if first >= len(modules) {
+        return ""
+    }
 
 	final = modules[first].Output()
 
