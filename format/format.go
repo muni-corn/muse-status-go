@@ -32,13 +32,12 @@ func Chain(modules ...DataBlock) string {
 
 	// huh. increment first until we find a module that
 	// isn't nil or blank(empty for loop)
+	for first = 0; first < len(modules) && (modules[first] == nil || strings.TrimSpace(modules[first].Output()) == ""); first++ { }
 
-	for first = 0; first < len(modules) || modules[first] == nil || strings.TrimSpace(modules[first].Output()) == ""; first++ { }
-
-    // if everything is blank, return a blank string
-    if first >= len(modules) {
-        return ""
-    }
+	// if everything is blank, return a blank string
+	if first >= len(modules) {
+		return ""
+	}
 
 	final = modules[first].Output()
 
@@ -47,7 +46,7 @@ func Chain(modules ...DataBlock) string {
 			continue
 		}
 		v := modules[i].Output()
-        v = strings.ReplaceAll(v, "&", `&amp;`) // escape ampersand for json
+		v = strings.ReplaceAll(v, "&", `&amp;`) // escape ampersand for json
 
 		// trim space at the ends
 		v = strings.TrimSpace(v)
@@ -224,7 +223,7 @@ func interpolateColors(first, second string, interpolation float32) (result stri
 
 	resultInt := a<<24 + r<<16 + g<<8 + b
 
-    result = fmt.Sprintf("%08x", resultInt)
+	result = fmt.Sprintf("%08x", resultInt)
 	return
 }
 
