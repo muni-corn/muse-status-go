@@ -14,11 +14,13 @@ const (
 )
 
 var (
-	signalCmd        = "nmcli -t -f in-use,signal dev wifi | grep '*'"
-	statusCmd        = "nmcli -t -f type,state,connection dev"
-	connectionIcons  = [5]rune{'冷', '爛', '嵐', '襤', '蠟'}
-	disconnectedIcon = '浪'
-	disabledIcon     = '來'
+	signalCmd         = "nmcli -t -f in-use,signal dev wifi | grep '*'"
+	statusCmd         = "nmcli -t -f type,state,connection dev"
+	wirelessInterface = "wlo1"
+	connectionIcons   = []rune{'\uf92e', '\uf91e', '\uf921', '\uf924', '\uf927'}
+	packetLossIcons   = []rune{'\uf92a', '\uf91f', '\uf922', '\uf925', '\uf928'}
+	disconnectedIcon  = '\uf92e'
+	disabledIcon      = '\uf92d'
 )
 
 // StartNetworkBroadcast returns a string channel that is
@@ -44,14 +46,14 @@ func broadcast(block *format.ClassicBlock, channel chan *format.ClassicBlock) {
 	}
 }
 
-var	lineReturnRegex = regexp.MustCompile(`\r?\n`)
+var lineReturnRegex = regexp.MustCompile(`\r?\n`)
 
 func getWifi(block *format.ClassicBlock) {
 	// TODO error checking
 
 	output, err := exec.Command("bash", "-c", statusCmd).Output()
 	if err != nil {
-		println("Error getting connection status");
+		println("Error getting connection status")
 		return
 	}
 
@@ -74,9 +76,9 @@ func getWifi(block *format.ClassicBlock) {
 		ssid := strings.Split(stringToUse, ":")[2]
 		if strings.Contains(stringToUse, "connecting") {
 			// see if we're connecting
-			block.Set(format.UrgencyLow, disconnectedIcon, "Connecting to " + ssid, "")
+			block.Set(format.UrgencyLow, disconnectedIcon, "Connecting to "+ssid, "")
 			return
-		} else if !strings.Contains(stringToUse, "disconnected") {// make sure we're not disconnected from wifi
+		} else if !strings.Contains(stringToUse, "disconnected") { // make sure we're not disconnected from wifi
 			ssid := strings.Split(stringToUse, ":")[2]
 			signal, err := getSignalStrength(block)
 
@@ -85,15 +87,24 @@ func getWifi(block *format.ClassicBlock) {
 				return
 			}
 
+            // determine which icons we'll use based on
+            // packetLoss
+            var icons []rune
+            if packetLoss() {
+                icons = packetLossIcons
+            } else {
+                icons = connectionIcons
+            }
+
 			// get the icon
-			iconIndex := len(connectionIcons) * signal / 100
+			iconIndex := len(icons) * signal / 100
 
 			// constrains index
-			if iconIndex >= len(connectionIcons) {
-				iconIndex = len(connectionIcons) - 1
+			if iconIndex >= len(icons) {
+				iconIndex = len(icons) - 1
 			}
 
-			block.Set(format.UrgencyNormal, connectionIcons[iconIndex], ssid, "")
+			block.Set(format.UrgencyNormal, icons[iconIndex], ssid, "")
 			return
 		}
 		// if none of the above, we're disconnected
@@ -121,4 +132,10 @@ func getSignalStrength(block *format.ClassicBlock) (signal int, err error) {
 
 func getEthernet() string {
 	return ""
+}
+
+func packetLoss() bool {
+	cmd := exec.Command("ping", "-c", "2", "-W", "2", "-I", wirelessInterface, "8.8.8.8")
+    err := cmd.Run()
+    return err != nil
 }
