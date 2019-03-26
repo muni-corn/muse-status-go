@@ -40,7 +40,7 @@ func StartVolumeBroadcast() chan *format.FadingBlock {
 
 				var icon rune
 				var text string
-				if current < 0 {
+				if current <= 0 {
 					icon = muteIcon
 					text = "Muted"
 				} else {
@@ -70,7 +70,7 @@ func StartVolumeBroadcast() chan *format.FadingBlock {
 	return channel
 }
 
-// returns the current volume percentage as an int, or returns a negative number
+// returns the current volume percentage as an int, or zero
 // if muted
 func getCurrentVolume() (percentage int, err error) {
 	output, err := exec.Command("amixer", "sget", "Master").Output()
@@ -82,7 +82,7 @@ func getCurrentVolume() (percentage int, err error) {
 
 	mixerStatus := onOffRegex.FindStringSubmatch(strOutput)[1] // should be 'on' or 'off'. if it's not, then wtf
 	if mixerStatus == "off" {
-		percentage = -1
+		percentage = 0 // muted
 	} else if mixerStatus == "on" {
 		percentageStr := percentageRegex.FindStringSubmatch(strOutput)[1]
 		percentage, err = strconv.Atoi(percentageStr)
