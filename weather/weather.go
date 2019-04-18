@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"muse-status/format"
+	"github.com/muni-corn/muse-status/format"
 	"net/http"
 	"strconv"
 	"time"
@@ -41,12 +41,34 @@ var (
 		"50d": '',
 		"50n": '',
 	}
+    // nerd font
+	// weatherIcons = map[string]rune{
+	// 	"01d": '\ue30d',
+	// 	"01n": '\ue32b',
+	// 	"02d": '\ue30c',
+	// 	"02n": '\ue379',
+	// 	"03d": '\ue302',
+	// 	"03n": '\ue37e',
+	// 	"04d": '\ue33d',
+	// 	"04n": '\ue33d',
+	// 	"09d": '\ue309',
+	// 	"09n": '\ue326',
+	// 	"10d": '\ue308',
+	// 	"10n": '\ue325',
+	// 	"11d": '\ue305',
+	// 	"11n": '\ue322',
+	// 	"13d": '\ue30a',
+	// 	"13n": '\ue327',
+	// 	"50d": '\ue303',
+	// 	"50n": '\ue313',
+	// }
 )
 
 // StartWeatherBroadcast returns a string channel that is fed weather
 // information
-func StartWeatherBroadcast() chan string {
-	channel := make(chan string)
+func StartWeatherBroadcast() chan *format.ClassicBlock {
+	channel := make(chan *format.ClassicBlock)
+    block := &format.ClassicBlock{Name: "weather"}
 
 	go func() {
 		for {
@@ -65,9 +87,12 @@ func StartWeatherBroadcast() chan string {
 			}
 
 			icon := getWeatherIcon(report)
-			weatherString := getWeatherString(report)
+            temperature := getTemperatureString(report)
+            description := getWeatherDescription(report)
 
-			channel <- icon + "  " + weatherString
+            block.Set(format.UrgencyNormal, icon, temperature, description)
+
+			channel <- block
 
 			time.Sleep(time.Minute * updateIntervalMinutes)
 		}
@@ -76,31 +101,38 @@ func StartWeatherBroadcast() chan string {
 	return channel
 }
 
-func getWeatherIcon(report fullWeatherReport) string {
+func getWeatherIcon(report fullWeatherReport) rune {
     if len(report.Weather) <= 0 {
-        return ""
+        return ' '
     }
 
     iconString := report.Weather[0].Icon
     if icon, ok := weatherIcons[iconString]; ok {
-        return string(icon)
+        return icon
     }
-	return iconString
+	return ' '
 }
 
-func getWeatherString(report fullWeatherReport) string {
+func getTemperatureString(report fullWeatherReport) string {
     if len(report.Weather) <= 0 {
         return ""
     }
 
 	// basically round degrees to the nearest int and add the degree sign
 	degrees := strconv.Itoa(int(report.Main.Temp+0.5)) + "°"
+    return degrees
+}
+
+func getWeatherDescription(report fullWeatherReport) string {
+    if len(report.Weather) <= 0 {
+        return ""
+    }
 
 	// capitalize the first letter in the description
 	desc := []rune(report.Weather[0].Description)
 	desc[0] = unicode.ToUpper(desc[0])
 
-	return degrees + " " + format.Dim(string(desc))
+    return string(desc)
 }
 
 func getLocationJSON() (location, error) {

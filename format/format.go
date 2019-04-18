@@ -7,64 +7,112 @@ import (
 	"time"
 )
 
-var secondaryColor = "FFFFFFFF"
+// Mode determines how data blocks should be
+// formatted. This can be set by the user.
+type Mode string
+
+// FormatMode definitions
+const (
+	ModeI3Bar    Mode = "i3bar"
+	ModeLemonbar Mode = "lemonbar"
+)
+
+var textFont, iconFont = "Fira Sans 10", "Material Design Icons 12"
+var primaryColor = "ffffffff"
+var secondaryColor = "ffffffc0"
+var warningColor = "ffaa00"
+var alarmColor = "ff0000"
+var mode = ModeI3Bar
 
 // Chain chains status bites together, ensuring that there are no
 // awkward spaces between bites.
-func Chain(modules ...string) string {
+func Chain(modules ...DataBlock) string {
+	var first int
 	var final string
-	firstNonBlank := true
 
-	for _, v := range modules {
+	// huh. increment first until we find a module that
+	// isn't nil or blank(empty for loop)
+	for first = 0; first < len(modules) && (modules[first] == nil || strings.TrimSpace(modules[first].Output()) == ""); first++ { }
+
+	// if everything is blank, return a blank string
+	if first >= len(modules) {
+		return ""
+	}
+
+	final = modules[first].Output()
+
+	for i := first + 1; i < len(modules); i++ {
+		if modules[i] == nil || modules[i].Hidden() {
+			continue
+		}
+		v := modules[i].Output()
+		v = strings.ReplaceAll(v, "&", `&amp;`) // escape ampersand for json
+
 		// trim space at the ends
 		v = strings.TrimSpace(v)
 		if v != "" {
-			if firstNonBlank {
-				final += v
-				firstNonBlank = false
-			} else {
-				final += Separator() + v
-			}
+			final += ModuleSeparator() + v
 		}
 	}
 
-	return final + Separator()
+	return final
 }
 
 // Action returns the original text wrapped in a clickable
 // area
 func Action(action, original string) string {
+	if mode == ModeI3Bar {
+		return original
+	}
 	s := fmt.Sprintf("%%{A:%s:}%s%%{A}", action, original)
 	return s
 }
 
 // Left aligns the original string to the left
 func Left(original string) string {
+	if mode == ModeI3Bar {
+		return original
+	}
 	return "%{l}" + original
 }
 
 // Center aligns the original string to the center
 func Center(original string) string {
+	if mode == ModeI3Bar {
+		return original
+	}
 	return "%{c}" + original
 }
 
 // Right aligns the original string to the right
 func Right(original string) string {
+	if mode == ModeI3Bar {
+		return original
+	}
 	return "%{r}" + original
 }
 
 // Dim apples a half-transparent white color to the original string
 func Dim(original string) string {
+	if mode == ModeI3Bar {
+		return original
+	}
 	return "%{F#C0" + secondaryColor + "}" + original + "%{F-}"
 }
 
 // Warning renders the original string orange
 func Warning(original string) string {
+	if mode == ModeI3Bar {
+		return original
+	}
 	return "%{F#FFAA00}" + original + "%{F-}"
 }
 
 // WarningBlink slowly blinks the original string oranage
 func WarningBlink(original string) string {
+	if mode == ModeI3Bar {
+		return original
+	}
 	if original == "" {
 		return ""
 	}
@@ -89,6 +137,9 @@ func WarningBlink(original string) string {
 // FadeToDim colors the string according to interpolation from full white (0) to
 // dim (1)
 func FadeToDim(original string, interpolation float32) string {
+	if mode == ModeI3Bar {
+		return original
+	}
 	if original == "" {
 		return ""
 	}
@@ -104,7 +155,7 @@ func FadeToDim(original string, interpolation float32) string {
 	x := interpolation * -1
 	y := x*x*x*x*x + 1
 
-	color, err := interpolateColors("C0"+ secondaryColor, "FFFFFFFF", y)
+	color, err := interpolateColors("C0"+secondaryColor, "FF"+primaryColor, y)
 	if err != nil {
 		println(err.Error())
 		color = secondaryColor
@@ -115,6 +166,9 @@ func FadeToDim(original string, interpolation float32) string {
 
 // Alert blinks the original string red
 func Alert(original string) string {
+	if mode == ModeI3Bar {
+		return original
+	}
 	if original == "" {
 		return ""
 	}
@@ -157,20 +211,30 @@ func interpolateColors(first, second string, interpolation float32) (result stri
 		return
 	}
 
-	r1, r2 := firstInt&0xFF, secondInt&0xFF
-	g1, g2 := (firstInt>>8)&0xFF, (secondInt>>8)&0xFF
-	b1, b2 := (firstInt>>16)&0xFF, (secondInt>>16)&0xFF
 	a1, a2 := (firstInt>>24)&0xFF, (secondInt>>24)&0xFF
+	r1, r2 := (firstInt>>16)&0xFF, (secondInt>>16)&0xFF
+	g1, g2 := (firstInt>>8)&0xFF, (secondInt>>8)&0xFF
+	b1, b2 := firstInt&0xFF, secondInt&0xFF
 
-	r := int(float32(r1)*(1-interpolation) + float32(r2)*interpolation)
-	g := int(float32(g1)*(1-interpolation) + float32(g2)*interpolation)
-	b := int(float32(b1)*(1-interpolation) + float32(b2)*interpolation)
-	a := int(float32(a1)*(1-interpolation) + float32(a2)*interpolation)
+	a := int(float32(a1)*(1.0-interpolation) + float32(a2)*interpolation)
+	r := int(float32(r1)*(1.0-interpolation) + float32(r2)*interpolation)
+	g := int(float32(g1)*(1.0-interpolation) + float32(g2)*interpolation)
+	b := int(float32(b1)*(1.0-interpolation) + float32(b2)*interpolation)
 
-	resultInt := a<<24 + b<<16 + g<<8 + r
+	resultInt := a<<24 + r<<16 + g<<8 + b
 
-	result = strconv.FormatInt(int64(resultInt), 16)
+	result = fmt.Sprintf("%08x", resultInt)
 	return
+}
+
+// ModuleSeparator returns something that separates modules
+// (spaces in Lemonbar mode, comma + space in i3 mode)
+func ModuleSeparator() string {
+	switch mode {
+	case ModeI3Bar:
+		return ","
+	}
+	return "    "
 }
 
 // Separator returns 4 spaces as a separator between data
@@ -186,16 +250,56 @@ func ByteToHex(value int) string {
 	} else if value < 0 {
 		return "00"
 	}
-	return strings.ToUpper(strconv.FormatInt(int64(value), 16))
+	return strconv.FormatInt(int64(value), 16)
 }
 
 // SetSecondaryColor sets the secondary (dim) color of
 // muse-status.
 func SetSecondaryColor(color string) {
 	switch {
-	case len(color) == 6:
+	case len(color) == 8:
 		secondaryColor = color
+	case len(color) == 6:
+		secondaryColor = color + "ff"
 	default:
-		println("Invalid secondary color. Defaulting to white.")
+		println("invalid secondary color. defaulting to gray")
 	}
+}
+
+// SetPrimaryColor sets the primary color of
+// muse-status.
+func SetPrimaryColor(color string) {
+	switch {
+	case len(color) == 8:
+		primaryColor = color
+	case len(color) == 6:
+		primaryColor = color + "ff"
+	default:
+		println("invalid primary color. defaulting to white")
+	}
+}
+
+// SetFormatMode sldksldksldkals;ala;skdkl;aslk
+func SetFormatMode(m string) {
+	switch m {
+	case "i3":
+		mode = ModeI3Bar
+	case "lemonbar":
+		mode = ModeLemonbar
+	}
+}
+
+// GetFormatMode returns the format mode.
+func GetFormatMode() Mode {
+	return mode
+}
+
+// SetTextFont sets the regular text font
+func SetTextFont(font string) {
+	textFont = font
+}
+
+// SetIconFont sets the icon font
+func SetIconFont(font string) {
+	iconFont = font
 }

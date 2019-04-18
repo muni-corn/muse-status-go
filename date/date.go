@@ -1,18 +1,22 @@
 package date
 
 import (
-	f "muse-status/format"
+	"github.com/muni-corn/muse-status/format"
 	"time"
 )
 
 const (
 	timeFormat = "3:04 pm"
 	dateFormat = "Mon, Jan 2"
+    // icon = '\uf64f' // nerd font icon
+    icon = '\uf150'
 )
 
 // StartDateBroadcast creates a string channel that transmits the current date
-func StartDateBroadcast() chan string {
-	channel := make(chan string)
+func StartDateBroadcast() chan *format.ClassicBlock {
+	channel := make(chan *format.ClassicBlock)
+    block := &format.ClassicBlock{Name: "date"}
+    block.Icon = icon
 
 	go func() {
 		var lastTimeString string
@@ -27,9 +31,11 @@ func StartDateBroadcast() chan string {
 
 			if timeString != lastTimeString {
 				dateString := now.Format("Mon, Jan 2")
+
+                block.Set(format.UrgencyNormal, icon, timeString, dateString)
 				
 				// output to channel
-				channel <- "\uf150  " + timeString + "  " + f.Dim(dateString)
+				channel <- block
 
 				// if the time has changed, we're not changing again anytime
 				// soon. get number of seconds until next minute change and
@@ -61,7 +67,7 @@ func GetGreeting() string {
 	hour := time.Now().Hour()
 
 	switch {
-	case hour >= 4 && hour < 12:
+	case hour < 12:
 		return "Good morning!"
 	case hour >= 12 && hour < 17:
 		return "Good afternoon!"

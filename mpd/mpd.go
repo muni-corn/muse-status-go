@@ -1,7 +1,7 @@
 package mpd
 
 import (
-    "muse-status/format"
+    "github.com/muni-corn/muse-status/format"
     "regexp"
     "time"
     "github.com/fhs/gompd/mpd"
@@ -16,8 +16,11 @@ const (
 )
 
 const (
-    playingIcon = ''
-    pausedIcon  = ''
+    playingIcon = '\uf387'
+    pausedIcon  = '\uf3e4'
+    // nerd font icons
+    // playingIcon = '\uf387'
+    // pausedIcon  = '\uf38a'
 )
 
 var (
@@ -27,8 +30,9 @@ var (
 
 // StartMPDBroadcast returns a string channel that is fed information about any
 // current media that is playing from an mpd server
-func StartMPDBroadcast() chan string {
-    channel := make(chan string)
+func StartMPDBroadcast() chan *format.ClassicBlock {
+    channel := make(chan *format.ClassicBlock)
+    block := &format.ClassicBlock{Name: "mpd"}
 
     go func() {
         for {
@@ -58,7 +62,7 @@ func StartMPDBroadcast() chan string {
                 defer mpdClient.Close()
 
                 title, artist, state, err := getInfo(mpdClient)
-                updateChannel(title, artist, state, channel)
+                updateChannel(title, artist, state, block, channel)
                 for range watcher.Event {
                     title, artist, state, err = getInfo(mpdClient)
                     if err != nil {
@@ -67,12 +71,9 @@ func StartMPDBroadcast() chan string {
                         break
                     }
 
-                    updateChannel(title, artist, state, channel)
+                    updateChannel(title, artist, state, block, channel)
                 }
             }
-
-            // $20 says i'll remove this line
-            channel <- format.Dim(string(playingIcon) + "  " + ">.<  MPD client crashed! Recovering...")
 
             time.Sleep(time.Second * 2)
         }
@@ -81,23 +82,26 @@ func StartMPDBroadcast() chan string {
     return channel
 }
 
-func updateChannel(title, artist string, state playerState, channel chan string) {
-    var status string
+func updateChannel(title, artist string, state playerState, block *format.ClassicBlock, channel chan *format.ClassicBlock) {
+    if state == stopped {
+        block.SetHidden(true)
+        channel <- block
+        return
+    } else if block.Hidden() {
+        block.SetHidden(false)
+    }
 
-    // if no error, then feed the current song
-    // and state to the channel
-    song := title + "  " + format.Dim(artist)
+    block.PrimaryText = title
+    block.SecondaryText = artist
 
     switch state {
     case playing:
-        status = string(playingIcon) + "  " + song
+        block.Icon = playingIcon
     case paused:
-        status = string(pausedIcon) + "  " + song
-    case stopped:
-        status = ""
+        block.Icon = pausedIcon
     }
 
-    channel <- status
+    channel <- block
 }
 
 func getInfo(client *mpd.Client) (title string, artist string, state playerState, err error) {

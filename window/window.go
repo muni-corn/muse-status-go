@@ -1,12 +1,14 @@
 package window
 
 import (
-	"muse-status/format"
-	"muse-status/date"
+	"github.com/muni-corn/muse-status/format"
+	"github.com/muni-corn/muse-status/date"
+	// "bytes"
 	"strings"
 	"os/exec"
 	"time"
 	"regexp"
+	// "encoding/json"
 )
 
 var (
@@ -16,15 +18,17 @@ var (
 // StartWindowBroadcast returns a string channel that is fed info about the
 // current active window. If no window is active, it is fed a greeting or
 // information useful to the user.
-func StartWindowBroadcast() chan string {
-	channel := make(chan string)
+func StartWindowBroadcast() chan *format.ClassicBlock {
+	channel := make(chan *format.ClassicBlock)
+	block := &format.ClassicBlock{Name: "window"}
 
 	go func() {
 		var lastWindow string;
 		for {
-			currentWindow := window();
+			currentWindow := window()
 			if (lastWindow != currentWindow) {
-				channel <- currentWindow;
+				block.PrimaryText = currentWindow
+				channel <- block;
 				lastWindow = currentWindow;
 			}
 
@@ -36,13 +40,14 @@ func StartWindowBroadcast() chan string {
 }
 
 func window() string {
-	cmdOutput, err := exec.Command("xdotool", "getwindowfocus", "getwindowname").Output()
+	// get sway tree
+	cmdOutput, err := exec.Command("swaymsg", "-t", "get_tree").Output()
 	if err != nil {
-		return ""
+		return date.GetGreeting()
 	}
-		
+
 	output := string(cmdOutput)
-	if strings.Contains(output, "i3") {
+	if output == "i3" || strings.TrimSpace(output) == "" {
 		output = date.GetGreeting()
 	} else {
 		output = lineReturnRegex.ReplaceAllString(output, "")

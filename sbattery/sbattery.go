@@ -7,10 +7,12 @@ package sbattery
 // much to be in one file.
 
 import (
+	"github.com/muni-corn/muse-status/format"
+
 	"errors"
 	"io/ioutil"
-	"muse-status/format"
-	"muse-status/utils"
+	"os/exec"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -55,112 +57,65 @@ var (
 	chargingAvgByPercent       [10]rateData
 	dischargingAvgByHourOfDay  [24]rateData
 	dischargingAvgByHourOfWeek [7 * 24]rateData
+	unknownIcon      = '\uf590'
 )
 
 // StartSmartBatteryBroadcast returns a channel that transfers intelligent
 // battery information
-func StartSmartBatteryBroadcast() chan string {
+func StartSmartBatteryBroadcast() chan *format.ClassicBlock {
 	// create a channel
-	channel := make(chan string)
-	go func() {
-		var lastStatus chargeStatus
-		var lastReading batteryReading
-		var lastRecordedReading batteryReading
+	channel := make(chan *format.ClassicBlock)
+	block := &format.ClassicBlock{Name: "sbattery"}
 
-		info, alert := "", false
-
-		for {
-			currentStatus, err := getBatteryStatus()
-			currentReading := takeReading()
-
-			// record the delta if we're past due for a
-			// recording
-			shouldRecordReading := currentReading.time.Sub(lastRecordedReading.time) >= time.Minute*recordInterval
-			if shouldRecordReading {
-				recordReading(currentStatus, lastRecordedReading, currentReading)
-			}
-
-			if err != nil {
-				channel <- format.Dim("Couldn't get battery info")
-			} else if lastReading != currentReading || lastStatus != currentStatus || alert {
-				// update status and reading
-				lastStatus = currentStatus
-				lastReading = currentReading
-
-				info, alert = getFullInfo(currentReading, currentStatus)
-				channel <- info
-
-				// if battery is low, sleep for less time
-				// and continue the loop for animation
-				// (we continue so we don't sleep for 3
-				//  seconds)
-				if alert {
-					time.Sleep(time.Second / 15)
-					continue
-				}
-			}
-			time.Sleep(time.Second * 3)
-		}
-	}()
+	// start the broadcast to it (async)
+	go broadcast(block, channel)
 
 	// return the channel
 	return channel
 }
 
-// returns the colored icon, percentage, and time remaining
-func getFullInfo(reading batteryReading, status chargeStatus) (string, bool) {
-	timeDone, err := getDueTime(status)
+// an async function that broadcasts battery information to the specified
+// channel
+func broadcast(block *format.ClassicBlock, channel chan *format.ClassicBlock) {
+	for {
+		output, _ := exec.Command("acpi").Output()
 
-	// get time remaining as string. if there was an error
-	// in calculating the time until the battery is
-	// full/empty, we
-	var timeString string
-	if err != nil {
-		timeString = ""
-	} else {
-		timeString = getTimeString(status, timeDone)
-	}
+		status, percentage, timeDone := parseReading(string(output))
 
-	// get the final, full information string
-	finalOutput := getMainInfo(status, reading.percentage) + timeString
-
-	return finalOutput, reading.percentage <= 15
-}
-
-// returns a colored icon and percentage, the main info of this
-// module
-func getMainInfo(status chargeStatus, percentage float32) string {
-	// icon
-	icon := getBatteryIcon(status, percentage)
-
-	// base string
-	base := icon + " " + strconv.Itoa(int(percentage)) + "%  "
-
-	switch status {
-	case Charging:
-		return base
-	case Discharging:
-		if percentage <= 15 {
-			return format.Alert(base)
-		} else if percentage <= 30 {
-			return format.Warning(base)
-		} else {
-			return base
+		var urgency format.Urgency
+		if status == Full {
+			block.SetHidden(true)
+			goto output
+		} else if block.Hidden() {
+			block.SetHidden(false)
 		}
-	case Full:
-		return "\uf084"
-	}
 
-	// something's weird at this point
-	return "\uf091"
+		if status != Charging {
+			switch {
+			case percentage <= 15:
+				urgency = format.UrgencyAlarmPulse
+			case percentage <= 30:
+				urgency = format.UrgencyWarning
+			}
+		}
+
+		block.Set(urgency, getBatteryIcon(status, percentage), strconv.Itoa(percentage)+"%", getTimeRemainingString(status, timeDone))
+
+	output:
+		channel <- block
+		if urgency == format.UrgencyAlarmPulse {
+			time.Sleep(time.Second / 15)
+		} else {
+			time.Sleep(time.Second * 5)
+		}
+	}
 }
 
-// returns an appropriate battery icon as a string based on
-// battery status and percentage
-func getBatteryIcon(status chargeStatus, percentage float32) string {
-	// get icon indices
-	chargingIndex := int((percentage / 100) * float32(len(chargingIcons)))
-	dischargingIndex := int((percentage / 100) * float32(len(dischargingIcons)))
+// returns the battery icon
+func getBatteryIcon(status ChargeStatus, percentage int) rune {
+	// get indices
+	chargingIndex := int((float32(percentage) / 100) * float32(len(chargingIcons)))
+	dischargingIndex := int((float32(percentage) / 100) * float32(len(dischargingIcons)))
 
 	// constrain indices (but they should never drop below
 	// zero)
@@ -180,15 +135,18 @@ func getBatteryIcon(status chargeStatus, percentage float32) string {
 	case Discharging:
 		icon = dischargingIcons[dischargingIndex]
 	case Full:
-		icon = chargingIcons[len(chargingIcons)-1]
+		// no display if full (return space character; found
+		// that return the null character terminates i3bar's
+		// json and will cause a problem
+		return ' '
 	}
 
-	return string(icon)
+	return icon
 }
 
-// returns a dimmed string telling at which time the battery
-// will be empty/full, e.g. "full at 3:30 pm".
-func getTimeString(status chargeStatus, timeDone time.Time) string {
+// returns a string telling at which time the battery will be empty/full
+// e.g. "full at 3:30 pm"
+func getTimeRemainingString(status ChargeStatus, timeDone time.Time) string {
 	if (status == Charging || status == Discharging) && !timeDone.IsZero() {
 		// get the time string prefix
 		var timeStringPrefix string
@@ -198,7 +156,7 @@ func getTimeString(status chargeStatus, timeDone time.Time) string {
 			timeStringPrefix = "until "
 		}
 
-		return format.Dim(timeStringPrefix + timeDone.Format("3:04 pm"))
+		return timeStringPrefix + timeDone.Format("3:04 pm")
 	}
 	return ""
 }
@@ -510,4 +468,9 @@ W2			| discharging values by hour of week
 ...			|
 W167		|
 
+<<<<<<< HEAD
+=======
+A0			// saturday
+...
+>>>>>>> e53d2dc8aa5bdec3fb26b63b63a94de99e4f2193
 */
