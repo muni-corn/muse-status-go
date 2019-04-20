@@ -1,7 +1,6 @@
 package date
 
 import (
-	"github.com/muni-corn/muse-status/format"
 	"time"
 )
 
@@ -11,56 +10,6 @@ const (
     // icon = '\uf64f' // nerd font icon
     icon = '\uf150'
 )
-
-// StartDateBroadcast creates a string channel that transmits the current date
-func StartDateBroadcast() chan *format.ClassicBlock {
-	channel := make(chan *format.ClassicBlock)
-    block := &format.ClassicBlock{Name: "date"}
-    block.Icon = icon
-
-	go func() {
-		var lastTimeString string
-
-		for {
-			// get current time
-			now := time.Now()
-			timeString := now.Format("3:04 pm")
-
-			// default sleep interval to a 20th of a second
-			sleepInterval := time.Second / 20
-
-			if timeString != lastTimeString {
-				dateString := now.Format("Mon, Jan 2")
-
-                block.Set(format.UrgencyNormal, icon, timeString, dateString)
-				
-				// output to channel
-				channel <- block
-
-				// if the time has changed, we're not changing again anytime
-				// soon. get number of seconds until next minute change and
-				// sleep for that many seconds minus 0.25 seconds (in case we
-				// sleep too long; this allows for an accurate time change as
-				// we're updating every 20th second when we're anticipating a
-				// time change)
-				sleepInterval = time.Second * time.Duration(60 - now.Second()) - time.Second / 4
-
-				// update lastTimeString
-				lastTimeString = timeString
-
-				// skip sleeping if we're not going to sleep anyways
-				if sleepInterval < 0 {
-					continue
-				}
-			}
-
-			// sleep
-			time.Sleep(sleepInterval)
-		}
-	}()
-
-	return channel
-}
 
 // GetGreeting returns a greeting based on the hour of the day
 func GetGreeting() string {
