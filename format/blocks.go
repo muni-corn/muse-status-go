@@ -150,15 +150,15 @@ const secondsThreshold = 3
 // Output returns the ClassicBlock's output
 func (f *FadingBlock) Output() string {
 	var color string
-    var err error
+    // var err error
 	if f.fading {
 		secondsPassed := float32(time.Now().Sub(f.LastUpdate)) / float32(time.Second)
 		x := secondsPassed / secondsThreshold
 		x = x * x * x * x * x // quintic interpolation
-        color, err = interpolateColors(primaryColor, secondaryColor, x)
-        if err != nil {
-            f.Text += "(err: " + err.Error() + ")"
-        }
+        color, _ = interpolateColors(primaryColor, secondaryColor, x)
+        // if err != nil {
+        //     f.Text += "(err: " + err.Error() + ")"
+        // }
 
 		if secondsPassed > secondsThreshold {
 			f.fading = false

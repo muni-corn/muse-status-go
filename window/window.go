@@ -3,7 +3,7 @@ package window
 import (
 	"github.com/muni-corn/muse-status/format"
 	"github.com/muni-corn/muse-status/date"
-	// "bytes"
+
 	"strings"
 	"os/exec"
 	"time"
