@@ -7,8 +7,8 @@ import (
 const (
 	timeFormat = "3:04 pm"
 	dateFormat = "Mon, Jan 2"
-    // icon = '\uf64f' // nerd font icon
-    icon = '\uf150'
+	// icon = '\uf64f' // nerd font icon
+	icon = '\uf150'
 )
 
 // GetGreeting returns a greeting based on the hour of the day

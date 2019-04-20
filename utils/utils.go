@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-// GetIntFromFile returns the first number in a 
+// GetIntFromFile returns the first number in a
 // file
 func GetIntFromFile(filepath string) (value int, err error) {
 	output, err := ioutil.ReadFile(filepath)

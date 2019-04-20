@@ -2,9 +2,9 @@ package brightness
 
 import (
 	"github.com/muni-corn/muse-status/format"
+	"github.com/muni-corn/muse-status/utils"
 	"strconv"
 	"time"
-	"github.com/muni-corn/muse-status/utils"
 )
 
 const (
@@ -14,7 +14,7 @@ const (
 var (
 	brightnessIcons = [6]rune{'', '', '', '', '', ''}
 	// brightnessIcons = [6]rune{'\uf5da', '\uf5db', '\uf5dc', '\uf5dd', '\uf5de', '\uf5df'} // nerd font icons
-	card            = "amdgpu_bl0"
+	card = "amdgpu_bl0"
 )
 
 // StartBrightnessBroadcast returns a string channel that is fed screen
@@ -43,7 +43,7 @@ func StartBrightnessBroadcast() chan *format.FadingBlock {
 				println("Brightness encountered an error: ", err.Error())
 				time.Sleep(2 * time.Second)
 				continue
-			} 
+			}
 
 			// get the brightness percentage from 0 to 100
 			brightnessPercentage := current * 100 / max
@@ -60,7 +60,6 @@ func StartBrightnessBroadcast() chan *format.FadingBlock {
 				// update old data
 				lastBrightness = brightnessPercentage
 			}
-
 
 			// animate
 			if block.Fading() {

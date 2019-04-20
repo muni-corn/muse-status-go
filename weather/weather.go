@@ -3,8 +3,8 @@ package weather
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"github.com/muni-corn/muse-status/format"
+	"io/ioutil"
 	"net/http"
 	"strconv"
 	"time"
@@ -17,7 +17,7 @@ const (
 	units                 = "imperial"
 	locationServicesURL   = "https://location.services.mozilla.com/v1/geolocate?key=geoclue"
 	openWeatherMapURL     = "http://api.openweathermap.org/data/2.5/weather?lat=%f&lon=%f&appid=%s&units=%s"
-    defaultIcon           = '\uf50f'
+	defaultIcon           = '\uf50f'
 )
 
 var (
@@ -41,7 +41,7 @@ var (
 		"50d": '',
 		"50n": '',
 	}
-    // nerd font
+	// nerd font
 	// weatherIcons = map[string]rune{
 	// 	"01d": '\ue30d',
 	// 	"01n": '\ue32b',
@@ -68,7 +68,7 @@ var (
 // information
 func StartWeatherBroadcast() chan *format.ClassicBlock {
 	channel := make(chan *format.ClassicBlock)
-    block := &format.ClassicBlock{Name: "weather"}
+	block := &format.ClassicBlock{Name: "weather"}
 
 	go func() {
 		for {
@@ -87,10 +87,10 @@ func StartWeatherBroadcast() chan *format.ClassicBlock {
 			}
 
 			icon := getWeatherIcon(report)
-            temperature := getTemperatureString(report)
-            description := getWeatherDescription(report)
+			temperature := getTemperatureString(report)
+			description := getWeatherDescription(report)
 
-            block.Set(format.UrgencyNormal, icon, temperature, description)
+			block.Set(format.UrgencyNormal, icon, temperature, description)
 
 			channel <- block
 
@@ -102,37 +102,37 @@ func StartWeatherBroadcast() chan *format.ClassicBlock {
 }
 
 func getWeatherIcon(report fullWeatherReport) rune {
-    if len(report.Weather) <= 0 {
-        return ' '
-    }
+	if len(report.Weather) <= 0 {
+		return ' '
+	}
 
-    iconString := report.Weather[0].Icon
-    if icon, ok := weatherIcons[iconString]; ok {
-        return icon
-    }
+	iconString := report.Weather[0].Icon
+	if icon, ok := weatherIcons[iconString]; ok {
+		return icon
+	}
 	return ' '
 }
 
 func getTemperatureString(report fullWeatherReport) string {
-    if len(report.Weather) <= 0 {
-        return ""
-    }
+	if len(report.Weather) <= 0 {
+		return ""
+	}
 
 	// basically round degrees to the nearest int and add the degree sign
 	degrees := strconv.Itoa(int(report.Main.Temp+0.5)) + "°"
-    return degrees
+	return degrees
 }
 
 func getWeatherDescription(report fullWeatherReport) string {
-    if len(report.Weather) <= 0 {
-        return ""
-    }
+	if len(report.Weather) <= 0 {
+		return ""
+	}
 
 	// capitalize the first letter in the description
 	desc := []rune(report.Weather[0].Description)
 	desc[0] = unicode.ToUpper(desc[0])
 
-    return string(desc)
+	return string(desc)
 }
 
 func getLocationJSON() (location, error) {

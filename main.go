@@ -10,7 +10,7 @@ import (
 	"github.com/muni-corn/muse-status/sbattery"
 	"github.com/muni-corn/muse-status/volume"
 	"github.com/muni-corn/muse-status/weather"
-//	"github.com/muni-corn/muse-status/window"
+	//	"github.com/muni-corn/muse-status/window"
 	"os"
 )
 

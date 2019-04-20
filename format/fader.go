@@ -1,17 +1,17 @@
 package format
 
 import (
-    "time"
+	"time"
 )
 
 // Fader creates a fading effect between two colors.
 type Fader struct {
-    Duration float32
-    StartColor string
-    EndColor string
+	Duration   float32
+	StartColor string
+	EndColor   string
 
-    lastUpdate time.Time
-    fading bool
+	lastUpdate time.Time
+	fading     bool
 }
 
 // Trigger starts the FadingBlock's animation

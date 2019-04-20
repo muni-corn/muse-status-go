@@ -32,7 +32,8 @@ func Chain(modules ...DataBlock) string {
 
 	// huh. increment first until we find a module that
 	// isn't nil or blank(empty for loop)
-	for first = 0; first < len(modules) && modules[first] == nil; first++ { }
+	for first = 0; first < len(modules) && modules[first] == nil; first++ {
+	}
 
 	// if everything is blank, return a blank string
 	if first >= len(modules) {

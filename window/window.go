@@ -1,13 +1,13 @@
 package window
 
 import (
-	"github.com/muni-corn/muse-status/format"
 	"github.com/muni-corn/muse-status/date"
+	"github.com/muni-corn/muse-status/format"
 
-	"strings"
 	"os/exec"
-	"time"
 	"regexp"
+	"strings"
+	"time"
 	// "encoding/json"
 )
 
@@ -23,16 +23,16 @@ func StartWindowBroadcast() chan *format.ClassicBlock {
 	block := &format.ClassicBlock{Name: "window"}
 
 	go func() {
-		var lastWindow string;
+		var lastWindow string
 		for {
 			currentWindow := window()
-			if (lastWindow != currentWindow) {
+			if lastWindow != currentWindow {
 				block.PrimaryText = currentWindow
-				channel <- block;
-				lastWindow = currentWindow;
+				channel <- block
+				lastWindow = currentWindow
 			}
 
-			time.Sleep(time.Second / 10);
+			time.Sleep(time.Second / 10)
 		}
 	}()
 
@@ -53,7 +53,5 @@ func window() string {
 		output = lineReturnRegex.ReplaceAllString(output, "")
 	}
 
-
 	return format.Dim(output)
 }
-

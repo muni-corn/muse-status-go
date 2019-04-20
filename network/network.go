@@ -87,14 +87,14 @@ func getWifi(block *format.ClassicBlock) {
 				return
 			}
 
-            // determine which icons we'll use based on
-            // packetLoss
-            var icons []rune
-            if packetLoss() {
-                icons = packetLossIcons
-            } else {
-                icons = connectionIcons
-            }
+			// determine which icons we'll use based on
+			// packetLoss
+			var icons []rune
+			if packetLoss() {
+				icons = packetLossIcons
+			} else {
+				icons = connectionIcons
+			}
 
 			// get the icon
 			iconIndex := len(icons) * signal / 100
@@ -136,6 +136,6 @@ func getEthernet() string {
 
 func packetLoss() bool {
 	cmd := exec.Command("ping", "-c", "2", "-W", "2", "-I", wirelessInterface, "8.8.8.8")
-    err := cmd.Run()
-    return err != nil
+	err := cmd.Run()
+	return err != nil
 }

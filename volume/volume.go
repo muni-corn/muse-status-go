@@ -33,7 +33,7 @@ func StartVolumeBroadcast() chan *format.FadingBlock {
 				println("Error getting volume: " + err.Error())
 				time.Sleep(2 * time.Second)
 				continue
-			} 
+			}
 
 			// if the volume has changed
 			if current != lastVolume {
@@ -54,7 +54,7 @@ func StartVolumeBroadcast() chan *format.FadingBlock {
 
 				// update old data
 				lastVolume = current
-			} 
+			}
 
 			// animate
 			if block.Fading() {

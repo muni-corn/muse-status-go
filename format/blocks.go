@@ -22,14 +22,14 @@ type DataBlock interface {
 	NeedsUpdate() bool
 	Update()
 
-    Name() string
+	Name() string
 	Icon() rune
 	Text() (primary, secondary string)
-    
-    Fader() *Fader
+
+	Fader() *Fader
 	Hidden() bool
 	Urgency() Urgency
-    ForceShort() bool
+	ForceShort() bool
 }
 
 const (
@@ -45,37 +45,37 @@ func JSONOf(b DataBlock) string {
 		return ""
 	}
 
-    // get short text
-    shortText := shortTextOf(b, primaryColor)
+	// get short text
+	shortText := shortTextOf(b, primaryColor)
 
-    // decide which fullText to use, in case we're forcing
-    // short text
-    var fullText string
-    if b.ForceShort() {
-        fullText = shortText
-    } else {
-        fullText = fullTextOf(b, primaryColor, secondaryColor)
-    }
+	// decide which fullText to use, in case we're forcing
+	// short text
+	var fullText string
+	if b.ForceShort() {
+		fullText = shortText
+	} else {
+		fullText = fullTextOf(b, primaryColor, secondaryColor)
+	}
 
-    // return the json
+	// return the json
 	return fmt.Sprintf(jsonTemplate, b.Name(), fullText, shortText)
 }
 
 func fullTextOf(b DataBlock, primaryColor, secondaryColor string) string {
 	secondaryRaw, _ := b.Text()
-    var secondary string
+	var secondary string
 	if secondaryRaw != "" {
 		secondary = fmt.Sprintf(pangoTemplate, secondaryColor, textFont, secondaryRaw)
 	}
 
-    return fmt.Sprintf(twoStringTemplate, shortTextOf(b, primaryColor), secondary)
+	return fmt.Sprintf(twoStringTemplate, shortTextOf(b, primaryColor), secondary)
 }
 
 func shortTextOf(b DataBlock, primaryColor string) string {
 	iconRaw := b.Icon()
 	primaryRaw, _ := b.Text()
 
-    var icon, primary string
+	var icon, primary string
 
 	if iconRaw != ' ' {
 		icon = fmt.Sprintf(pangoTemplate, primaryColor, textFont, string(iconRaw))
@@ -84,7 +84,7 @@ func shortTextOf(b DataBlock, primaryColor string) string {
 		primary = fmt.Sprintf(pangoTemplate, primaryColor, textFont, strings.TrimSpace(primaryRaw))
 	}
 
-    return fmt.Sprintf(twoStringTemplate, icon, primary)
+	return fmt.Sprintf(twoStringTemplate, icon, primary)
 }
 
 func getAlarmPulseColor() (color string) {
