@@ -1,7 +1,6 @@
 package mpd
 
 import (
-    "regexp"
     "github.com/fhs/gompd/mpd"
 )
 
@@ -19,11 +18,6 @@ const (
     // nerd font icons
     // playingIcon = '\uf387'
     // pausedIcon  = '\uf38a'
-)
-
-var (
-    lineSplitRegex = regexp.MustCompile(`\r?\n`)
-    statusRegex    = regexp.MustCompile(`\[([A-z]*?)\]`) // matches words within brackets (get first capturing group)
 )
 
 func getIcon(state playerState) rune {
