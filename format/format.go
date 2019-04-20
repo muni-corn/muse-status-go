@@ -17,7 +17,7 @@ const (
 	ModeLemonbar Mode = "lemonbar"
 )
 
-var textFont, iconFont = "Fira Sans 10", "Material Design Icons 12"
+var textFont, iconFont = "Noto Sans 10", "Material Design Icons 12"
 var primaryColor = "ffffffff"
 var secondaryColor = "ffffffc0"
 var warningColor = "ffaa00"
