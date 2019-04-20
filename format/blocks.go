@@ -12,6 +12,7 @@ type Urgency int
 // Urgency definitions
 const (
 	UrgencyNormal Urgency = iota
+	UrgencyLow
 	UrgencyWarning
 	UrgencyWarningPulse
 	UrgencyAlarmPulse
@@ -26,7 +27,7 @@ type DataBlock interface {
 	Icon() rune
 	Text() (primary, secondary string)
 
-	Fader() *Fader
+	Colorer() Colorer
 	Hidden() bool
 	Urgency() Urgency
 	ForceShort() bool
@@ -46,7 +47,7 @@ func JSONOf(b DataBlock) string {
 	}
 
 	// get short text
-	shortText := shortTextOf(b, primaryColor)
+	shortText := shortTextOf(b)
 
 	// decide which fullText to use, in case we're forcing
 	// short text
@@ -54,50 +55,69 @@ func JSONOf(b DataBlock) string {
 	if b.ForceShort() {
 		fullText = shortText
 	} else {
-		fullText = fullTextOf(b, primaryColor, secondaryColor)
+		fullText = fullTextOf(b)
 	}
 
 	// return the json
 	return fmt.Sprintf(jsonTemplate, b.Name(), fullText, shortText)
 }
 
-func fullTextOf(b DataBlock, primaryColor, secondaryColor string) string {
-	secondaryRaw, _ := b.Text()
-	var secondary string
-	if secondaryRaw != "" {
-		secondary = fmt.Sprintf(pangoTemplate, secondaryColor, textFont, secondaryRaw)
+func fullTextOf(b DataBlock) string {
+	secondaryRawText, _ := b.Text()
+	var secondaryText string
+	if secondaryRawText != "" {
+		secondaryText = fmt.Sprintf(pangoTemplate, b.Colorer().SecondaryColor(), textFont, secondaryRawText)
 	}
 
-	return fmt.Sprintf(twoStringTemplate, shortTextOf(b, primaryColor), secondary)
+	return fmt.Sprintf(twoStringTemplate, shortTextOf(b), secondaryText)
 }
 
-func shortTextOf(b DataBlock, primaryColor string) string {
+func shortTextOf(b DataBlock) string {
 	iconRaw := b.Icon()
-	primaryRaw, _ := b.Text()
+	primaryRawText, _ := b.Text()
 
-	var icon, primary string
+	var icon, primaryText string
 
 	if iconRaw != ' ' {
-		icon = fmt.Sprintf(pangoTemplate, primaryColor, textFont, string(iconRaw))
+		icon = fmt.Sprintf(pangoTemplate, b.Colorer().IconColor(), textFont, string(iconRaw))
 	}
-	if primaryRaw != "" {
-		primary = fmt.Sprintf(pangoTemplate, primaryColor, textFont, strings.TrimSpace(primaryRaw))
+	if primaryRawText != "" {
+		primaryText = fmt.Sprintf(pangoTemplate, b.Colorer().PrimaryColor(), textFont, strings.TrimSpace(primaryRawText))
 	}
 
-	return fmt.Sprintf(twoStringTemplate, icon, primary)
+	return fmt.Sprintf(twoStringTemplate, icon, primaryText)
 }
 
-func getAlarmPulseColor() (color string) {
-	// convert nanoseconds to milliseconds
-	milliseconds := time.Now().Nanosecond() / 1000000
+func getAlarmPulseColor() string {
+	return getPulseColor(alarmColor, 1)
+}
 
-	// get alpha byte value
-	interpolation := cubicEaseArc(float32(milliseconds) / 1000)
+func getWarnPulseColor() string {
+	return getPulseColor(warningColor, 2)
+}
 
-	color, err := interpolateColors(secondaryColor, alarmColor+"ff", interpolation)
-	if err != nil {
-		color = alarmColor
+func getPulseColor(color string, seconds float32) string {
+	var result string
+
+	// color must be 8 characters long to be valid. if there
+	// are only 6, we'll append "ff" for our 100% opacity
+	// alpha value.
+	if len(color) == 6 {
+		color += "ff"
+	} else if len(color) != 8 {
+		return color
 	}
 
-	return
+	// get alpha byte value. interpolation is a value from
+	// zero to one, calculated by unixMillis/maxMillis
+	maxMillis := 1000 * seconds
+	unixMillis := (time.Now().UnixNano() / int64(time.Millisecond)) % int64(maxMillis)
+	interpolation := cubicEaseArc(float32(unixMillis) / maxMillis)
+
+	result, err := interpolateColors(secondaryColor, color, interpolation)
+	if err != nil {
+		result = alarmColor
+	}
+
+	return result
 }

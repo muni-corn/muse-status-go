@@ -7,46 +7,31 @@ import (
 	"time"
 )
 
-// Mode determines how data blocks should be
-// formatted. This can be set by the user.
-type Mode string
-
-// FormatMode definitions
-const (
-	ModeI3Bar    Mode = "i3bar"
-	ModeLemonbar Mode = "lemonbar"
-)
-
 var textFont, iconFont = "Noto Sans 10", "Material Design Icons 12"
-var primaryColor = "ffffffff"
-var secondaryColor = "ffffffc0"
-var warningColor = "ffaa00"
-var alarmColor = "ff0000"
-var mode = ModeI3Bar
 
 // Chain chains status bites together, ensuring that there are no
 // awkward spaces between bites.
-func Chain(modules ...DataBlock) string {
+func Chain(blocks ...DataBlock) string {
 	var first int
 	var final string
 
 	// huh. increment first until we find a module that
-	// isn't nil or blank(empty for loop)
-	for first = 0; first < len(modules) && modules[first] == nil; first++ {
+	// isn't nil or blank (empty for loop)
+	for first = 0; first < len(blocks) && blocks[first] == nil; first++ {
 	}
 
 	// if everything is blank, return a blank string
-	if first >= len(modules) {
+	if first >= len(blocks) {
 		return ""
 	}
 
-	final = JSONOf(modules[first])
+	final = JSONOf(blocks[first])
 
-	for i := first + 1; i < len(modules); i++ {
-		if modules[i] == nil || modules[i].Hidden() {
+	for i := first + 1; i < len(blocks); i++ {
+		if blocks[i] == nil || blocks[i].Hidden() {
 			continue
 		}
-		v := JSONOf(modules[i])
+		v := JSONOf(blocks[i])
 		v = strings.ReplaceAll(v, "&", `&amp;`) // escape ampersand for json
 
 		// trim space at the ends
