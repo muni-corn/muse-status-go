@@ -6,33 +6,30 @@ import (
 	"time"
 )
 
-// DataBlock is a block of data in the status bar
-type DataBlock interface {
-	Output() string
-	Hidden() bool
-}
-
 // Urgency is a level of urgency applied to a block
 type Urgency int
 
 // Urgency definitions
 const (
 	UrgencyNormal Urgency = iota
-	UrgencyLow
 	UrgencyWarning
 	UrgencyWarningPulse
 	UrgencyAlarmPulse
 )
 
-// ClassicBlock has an icon, primary text, and dim secondary
-// text.
-type ClassicBlock struct {
-	Name          string
-	Icon          rune
-	PrimaryText   string
-	SecondaryText string
-	Urgency       Urgency
-	hidden        bool
+// DataBlock is a piece of data in the status bar.
+type DataBlock interface {
+	NeedsUpdate() bool
+	Update()
+
+    Name() string
+	Icon() rune
+	Text() (primary, secondary string)
+    
+    Fader() *Fader
+	Hidden() bool
+	Urgency() Urgency
+    ForceShort() bool
 }
 
 const (
@@ -41,64 +38,53 @@ const (
 	twoStringTemplate = "%s  %s"
 )
 
-// Output returns the ClassicBlock's output
-func (c *ClassicBlock) Output() string {
-	if c.hidden {
+// JSONOf Block b. Turns the information of b into a JSON
+// object for the i3 status protocol
+func JSONOf(b DataBlock) string {
+	if b.Hidden() {
 		return ""
 	}
 
-	defaultColor := primaryColor
-	switch c.Urgency {
-	case UrgencyLow:
-		defaultColor = secondaryColor
-	case UrgencyWarning:
-		defaultColor = warningColor
-	case UrgencyWarningPulse:
-		// TODO
-		defaultColor = warningColor
-	case UrgencyAlarmPulse:
-		defaultColor = getAlarmPulseColor()
-	}
+    // get short text
+    shortText := shortTextOf(b, primaryColor)
 
-	var icon, primary, secondary string
-	if c.Icon != '\x00' {
-		icon = fmt.Sprintf(pangoTemplate, defaultColor, iconFont, string(c.Icon))
-	}
-	if strings.TrimSpace(c.PrimaryText) != "" {
-		primary = fmt.Sprintf(pangoTemplate, defaultColor, textFont, c.PrimaryText)
-	}
-	if strings.TrimSpace(c.SecondaryText) != "" {
-		secondary = fmt.Sprintf(pangoTemplate, secondaryColor, textFont, c.SecondaryText)
-	}
+    // decide which fullText to use, in case we're forcing
+    // short text
+    var fullText string
+    if b.ForceShort() {
+        fullText = shortText
+    } else {
+        fullText = fullTextOf(b, primaryColor, secondaryColor)
+    }
 
-	shortText := strings.TrimSpace(fmt.Sprintf(twoStringTemplate, icon, primary))
-
-	var fullText string
-	if c.SecondaryText != "" {
-		fullText = strings.TrimSpace(fmt.Sprintf(twoStringTemplate, shortText, secondary))
-	} else {
-		fullText = shortText
-	}
-
-	return fmt.Sprintf(jsonTemplate, c.Name, fullText, shortText)
+    // return the json
+	return fmt.Sprintf(jsonTemplate, b.Name(), fullText, shortText)
 }
 
-// Hidden returns true if the ClassicBlock is hidden
-func (c *ClassicBlock) Hidden() bool {
-	return c.hidden
+func fullTextOf(b DataBlock, primaryColor, secondaryColor string) string {
+	secondaryRaw, _ := b.Text()
+    var secondary string
+	if secondaryRaw != "" {
+		secondary = fmt.Sprintf(pangoTemplate, secondaryColor, textFont, secondaryRaw)
+	}
+
+    return fmt.Sprintf(twoStringTemplate, shortTextOf(b, primaryColor), secondary)
 }
 
-// SetHidden sets the ClassicBlock's visibility
-func (c *ClassicBlock) SetHidden(h bool) {
-	c.hidden = h
-}
+func shortTextOf(b DataBlock, primaryColor string) string {
+	iconRaw := b.Icon()
+	primaryRaw, _ := b.Text()
 
-// Set sets the most common parameters of the ClassicBlock.
-func (c *ClassicBlock) Set(urgency Urgency, icon rune, primaryText, secondaryText string) {
-	c.Icon = icon
-	c.Urgency = urgency
-	c.PrimaryText = primaryText
-	c.SecondaryText = secondaryText
+    var icon, primary string
+
+	if iconRaw != ' ' {
+		icon = fmt.Sprintf(pangoTemplate, primaryColor, textFont, string(iconRaw))
+	}
+	if primaryRaw != "" {
+		primary = fmt.Sprintf(pangoTemplate, primaryColor, textFont, strings.TrimSpace(primaryRaw))
+	}
+
+    return fmt.Sprintf(twoStringTemplate, icon, primary)
 }
 
 func getAlarmPulseColor() (color string) {
@@ -106,85 +92,12 @@ func getAlarmPulseColor() (color string) {
 	milliseconds := time.Now().Nanosecond() / 1000000
 
 	// get alpha byte value
-    interpolation := cubicEaseArc(float32(milliseconds)/1000)
-    
-    color, err := interpolateColors(secondaryColor, alarmColor + "ff", interpolation)
-    if err != nil {
-        color = alarmColor
-    }
+	interpolation := cubicEaseArc(float32(milliseconds) / 1000)
 
-    return 
-}
-
-// FadingBlock is a DataBlock with an icon and text that are
-// dim by default. When its value changes, the data block
-// lights up momentarily, then fades back to dim.
-type FadingBlock struct {
-	Name       string
-	Icon       rune
-	Text       string
-	LastUpdate time.Time
-	fading     bool
-	hidden     bool
-}
-
-// Fading returns true if this FadingBlock is animating
-func (f *FadingBlock) Fading() bool {
-	return f.fading
-}
-
-// Set sets the common parameters of the ClassicBlock.
-func (f *FadingBlock) Set(icon rune, text string) {
-	f.Icon = icon
-	f.Text = text
-}
-
-// Trigger starts the FadingBlock's animation
-func (f *FadingBlock) Trigger() {
-	f.fading = true
-	f.LastUpdate = time.Now()
-}
-
-const secondsThreshold = 3
-
-// Output returns the ClassicBlock's output
-func (f *FadingBlock) Output() string {
-	var color string
-    // var err error
-	if f.fading {
-		secondsPassed := float32(time.Now().Sub(f.LastUpdate)) / float32(time.Second)
-		x := secondsPassed / secondsThreshold
-		x = x * x * x * x * x // quintic interpolation
-        color, _ = interpolateColors(primaryColor, secondaryColor, x)
-        // if err != nil {
-        //     f.Text += "(err: " + err.Error() + ")"
-        // }
-
-		if secondsPassed > secondsThreshold {
-			f.fading = false
-		}
-	} else {
-		color = secondaryColor
+	color, err := interpolateColors(secondaryColor, alarmColor+"ff", interpolation)
+	if err != nil {
+		color = alarmColor
 	}
 
-    color = strings.ToUpper(color)
-
-	icon := fmt.Sprintf(pangoTemplate, color, iconFont, string(f.Icon))
-	text := fmt.Sprintf(pangoTemplate, color, textFont, f.Text)
-	// text := fmt.Sprintf(pangoTemplate, color, textFont, f.Text + " (#" + color + ")")
-
-	shortText := icon
-	fullText := fmt.Sprintf(twoStringTemplate, shortText, text)
-
-	return fmt.Sprintf(jsonTemplate, f.Name, fullText, shortText)
-}
-
-// Hidden returns true if the ClassicBlock is hidden
-func (f *FadingBlock) Hidden() bool {
-	return f.hidden
-}
-
-// SetHidden sets the ClassicBlock's visibility
-func (f *FadingBlock) SetHidden(h bool) {
-	f.hidden = h
+	return
 }
