@@ -1,13 +1,8 @@
 package weather
 
-type locationResponse struct {
-	Location location `json:"location"`
-	Accuracy float32 `json:"accuracy"`
-}
-
 type location struct {
-	Latitude float32	`json:"lat"`
-	Longitude float32	`json:"lng"`
+	Latitude  float32 `json:"latitude"`
+	Longitude float32 `json:"longitude"`
 }
 
 type fullWeatherReport struct {
@@ -35,4 +30,3 @@ type weatherWind struct {
 type weatherMain struct {
 	Temp float32 `json:"temp"`
 }
-
