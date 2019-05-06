@@ -91,8 +91,8 @@ func updateChannel(title, artist string, state playerState, block *format.Classi
         block.SetHidden(false)
     }
 
-    block.PrimaryText = title
-    block.SecondaryText = artist
+    block.SetPrimaryText(title)
+    block.SetSecondaryText(artist)
 
     switch state {
     case playing:

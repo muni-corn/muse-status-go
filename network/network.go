@@ -120,7 +120,7 @@ func getSignalStrength(block *format.ClassicBlock) (signal int, err error) {
 	if err != nil {
 		block.Urgency = format.UrgencyLow
 		block.Icon = disconnectedIcon
-		block.PrimaryText = ""
+		block.SetPrimaryText("")
 		return
 	}
 

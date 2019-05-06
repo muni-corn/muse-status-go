@@ -29,8 +29,8 @@ const (
 type ClassicBlock struct {
 	Name          string
 	Icon          rune
-	PrimaryText   string
-	SecondaryText string
+	primaryText   string
+	secondaryText string
 	Urgency       Urgency
 	hidden        bool
 }
@@ -64,17 +64,17 @@ func (c *ClassicBlock) Output() string {
 	if c.Icon != '\x00' {
 		icon = fmt.Sprintf(pangoTemplate, defaultColor, iconFont, string(c.Icon))
 	}
-	if strings.TrimSpace(c.PrimaryText) != "" {
-		primary = fmt.Sprintf(pangoTemplate, defaultColor, textFont, c.PrimaryText)
+	if strings.TrimSpace(c.primaryText) != "" {
+		primary = fmt.Sprintf(pangoTemplate, defaultColor, textFont, c.primaryText)
 	}
-	if strings.TrimSpace(c.SecondaryText) != "" {
-		secondary = fmt.Sprintf(pangoTemplate, secondaryColor, textFont, c.SecondaryText)
+	if strings.TrimSpace(c.secondaryText) != "" {
+		secondary = fmt.Sprintf(pangoTemplate, secondaryColor, textFont, c.secondaryText)
 	}
 
 	shortText := strings.TrimSpace(fmt.Sprintf(twoStringTemplate, icon, primary))
 
 	var fullText string
-	if c.SecondaryText != "" {
+	if c.secondaryText != "" {
 		fullText = strings.TrimSpace(fmt.Sprintf(twoStringTemplate, shortText, secondary))
 	} else {
 		fullText = shortText
@@ -97,8 +97,24 @@ func (c *ClassicBlock) SetHidden(h bool) {
 func (c *ClassicBlock) Set(urgency Urgency, icon rune, primaryText, secondaryText string) {
 	c.Icon = icon
 	c.Urgency = urgency
-	c.PrimaryText = primaryText
-	c.SecondaryText = secondaryText
+    c.SetPrimaryText(primaryText)
+    c.SetSecondaryText(secondaryText)
+}
+
+// SetPrimaryText sets the primary text of the block
+func (c *ClassicBlock) SetPrimaryText(text string) {
+    c.primaryText = escape(text)
+}
+
+// SetSecondaryText sets the secondary text of the block
+func (c *ClassicBlock) SetSecondaryText(text string) {
+    c.secondaryText = escape(text)
+}
+
+func escape(text string) string {
+    text = strings.ReplaceAll(text, "&", `&amp;`) // escape ampersand for json
+    text = strings.ReplaceAll(text, "\"", `&quot;`) // escape quotes for json
+    return text
 }
 
 func getAlarmPulseColor() (color string) {
