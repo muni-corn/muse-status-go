@@ -4,6 +4,7 @@ package sbattery
 
 import (
 	"github.com/muni-corn/muse-status/format"
+	"github.com/muni-corn/muse-status/utils"
 	"os/exec"
 	"regexp"
 	"strconv"
@@ -12,14 +13,14 @@ import (
 )
 
 // ChargeStatus acts as an enum for battery status
-type ChargeStatus int
+type ChargeStatus string
 
 // Enum for battery statuses
 const (
-	Unknown     ChargeStatus = 0
-	Discharging ChargeStatus = 1
-	Charging    ChargeStatus = 2
-	Full        ChargeStatus = 3
+	Unknown     ChargeStatus = "Unknown"
+	Discharging ChargeStatus = "Discharging"
+	Charging    ChargeStatus = "Charging"
+	Full        ChargeStatus = "Full"
 )
 
 const (
@@ -37,78 +38,22 @@ var (
 	// unknownIcon = '\uf590'
 )
 
-// StartSmartBatteryBroadcast returns a channel that transfers intelligent
-// battery information
-func StartSmartBatteryBroadcast() chan *format.ClassicBlock {
-	// create a channel
-	channel := make(chan *format.ClassicBlock)
-	block := &format.ClassicBlock{Name: "sbattery"}
-
-	// start the broadcast to it (async)
-	go broadcast(block, channel)
-
-	// return the channel
-	return channel
-}
-
-// an async function that broadcasts battery information to the specified
-// channel
-func broadcast(block *format.ClassicBlock, channel chan *format.ClassicBlock) {
-	for {
-		output, _ := exec.Command("acpi").Output()
-
-		status, percentage, timeDone := parseReading(string(output))
-
-		var urgency format.Urgency
-		if status == Full {
-			block.SetHidden(true)
-			goto output
-		} else if block.Hidden() {
-			block.SetHidden(false)
-		}
-
-		if status != Charging {
-			switch {
-			case percentage <= 15:
-				urgency = format.UrgencyAlarmPulse
-			case percentage <= 30:
-				urgency = format.UrgencyWarning
-			}
-		}
-
-		block.Set(urgency, getBatteryIcon(status, percentage), strconv.Itoa(percentage)+"%", getTimeRemainingString(status, timeDone))
-
-	output:
-		channel <- block
-		if urgency == format.UrgencyAlarmPulse {
-			time.Sleep(time.Second / 15)
-		} else {
-			time.Sleep(time.Second * 5)
-		}
-	}
-}
-
-// returns the battery icon
+// returns a battery icon
 func getBatteryIcon(status ChargeStatus, percentage int) rune {
-	// get indices
-	chargingIndex := int((float32(percentage) / 100) * float32(len(chargingIcons)))
-	dischargingIndex := int((float32(percentage) / 100) * float32(len(dischargingIcons)))
-
-	// constrain indices (but theoretically they should
-	// never drop below zero)
-	if chargingIndex >= len(chargingIcons) {
-		chargingIndex = len(chargingIcons) - 1
-	}
-	if dischargingIndex >= len(dischargingIcons) {
-		dischargingIndex = len(dischargingIcons) - 1
-	}
-
 	// get the battery icon
 	var icon rune
 	switch status {
 	case Charging:
+		chargingIndex := int((float32(percentage) / 100) * float32(len(chargingIcons)))
+		if chargingIndex >= len(chargingIcons) {
+			chargingIndex = len(chargingIcons) - 1
+		}
 		icon = chargingIcons[chargingIndex]
 	case Discharging:
+		dischargingIndex := int((float32(percentage) / 100) * float32(len(dischargingIcons)))
+		if dischargingIndex >= len(dischargingIcons) {
+			dischargingIndex = len(dischargingIcons) - 1
+		}
 		icon = dischargingIcons[dischargingIndex]
 	case Full:
 		// no display if full (return space character; found
@@ -120,7 +65,7 @@ func getBatteryIcon(status ChargeStatus, percentage int) rune {
 	return icon
 }
 
-// returns a string telling at which time the battery will be empty/full
+// formats a string telling at which time the battery will be empty/full
 // e.g. "full at 3:30 pm"
 func getTimeRemainingString(status ChargeStatus, timeDone time.Time) string {
 	if (status == Charging || status == Discharging) && !timeDone.IsZero() {
@@ -137,73 +82,8 @@ func getTimeRemainingString(status ChargeStatus, timeDone time.Time) string {
 	return ""
 }
 
-func parseReading(reading string) (status ChargeStatus, percentage int, timeDone time.Time) {
-	// parse raw data
-	split := strings.Split(reading, ", ")
-
-	// get status
-	rawStatus := split[0]
-	switch {
-	case strings.Contains(rawStatus, "Discharging"):
-		status = Discharging
-	case strings.Contains(rawStatus, "Charging"):
-		status = Charging
-	case strings.Contains(rawStatus, "Full"):
-		status = Full
-	default:
-		status = Unknown
-	}
-
-	// get the percentage as an int
-	if status == Full {
-		percentage = 100
-	} else {
-		rawPercent := split[1]
-		percentage, _ = strconv.Atoi(strings.TrimSuffix(rawPercent, "%"))
-	}
-
-	if len(split) >= 3 {
-		rawTime := split[2]
-
-		regex := regexp.MustCompile(`[^\d:]`)
-		rawTime = regex.ReplaceAllString(rawTime, "")
-
-		timeSplit := strings.Split(rawTime, ":")
-		if len(timeSplit) == 3 {
-			hours, _ := strconv.Atoi(timeSplit[0])
-			minutes, _ := strconv.Atoi(timeSplit[1])
-			seconds, _ := strconv.Atoi(timeSplit[2])
-
-			// get the time at which the battery will be full/empty
-			timeDone = time.Now().Add(time.Hour * time.Duration(hours)).Add(time.Minute * time.Duration(minutes)).Add(time.Second * time.Duration(seconds))
-		}
-	}
-
-	return
-}
-
-// SysPowerSupplyBaseDir is the base directory for power supply
+// SysPowerSupplyBaseDir is the base directory for power supply classes
 const SysPowerSupplyBaseDir = "/sys/class/power_supply"
-
-func getBatteryStatus() ChargeStatus {
-	return Unknown
-}
-
-func getBatteryPercentage() float32 {
-	return 0
-}
-
-func takeReading() {
-
-}
-
-func recordReading() {
-
-}
-
-func getStringFromFile(filepath string) {
-
-}
 
 /*  DATA FILE FORMAT
 
