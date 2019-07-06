@@ -6,12 +6,20 @@ import (
 	"strings"
 )
 
-// GetIntFromFile returns the first number in a
-// file
+// GetIntFromFile returns a number in a file
 func GetIntFromFile(filepath string) (value int, err error) {
+	str, err := GetStringFromFile(filepath)
+	if err == nil {
+		value, err = strconv.Atoi(str)
+	}
+	return
+}
+
+// GetStringFromFile returns a file as a string
+func GetStringFromFile(filepath string) (value string, err error) {
 	output, err := ioutil.ReadFile(filepath)
 	if err == nil {
-		value, err = strconv.Atoi(strings.TrimSpace(string(output)))
+		value = strings.TrimSpace(string(output))
 	}
 	return
 }
