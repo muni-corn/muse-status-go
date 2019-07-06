@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/muni-corn/muse-status/format"
+	"time"
 )
 
 const (
@@ -36,20 +37,25 @@ type Block struct {
 
 	text  string
 	icon  rune
-	fader *format.Fader
+	fader *format.FadingColorer
 }
 
 // NewBrightnessBlock returns a new brightness.Block
 func NewBrightnessBlock(card string) *Block {
 	return &Block{
 		Card:  card,
-		fader: &format.Fader{Duration: 3},
 	}
 }
 
 // Name returns the name "brightness"
 func (b *Block) Name() string {
 	return "brightness"
+}
+
+// NextUpdateCheckTime return the time at which
+// this blocks should be checked for an update
+func (b *Block) NextUpdateCheckTime() time.Time {
+	return time.Now().Add(time.Second/10);
 }
 
 // NeedsUpdate returns true if the Block needs its text
@@ -83,8 +89,8 @@ func (b *Block) Text() (primary, secondary string) {
 	return b.text, ""
 }
 
-// Fader returns a pointer to the block's fader, for color
-func (b *Block) Fader() *format.Fader {
+// Colorer returns a pointer to the block's fader, for color
+func (b *Block) Colorer() format.Colorer {
 	return b.fader
 }
 
