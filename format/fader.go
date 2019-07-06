@@ -4,8 +4,8 @@ import (
 	"time"
 )
 
-// Fader creates a fading effect between two colors.
-type Fader struct {
+// FadingColorer creates a fading effect between two colors.
+type FadingColorer struct {
 	Duration   float32
 	StartColor string
 	EndColor   string
@@ -15,13 +15,14 @@ type Fader struct {
 }
 
 // Trigger starts the FadingBlock's animation
-func (f *Fader) Trigger() {
+func (f *FadingColorer) Trigger() {
 	f.fading = true
 	f.lastUpdate = time.Now()
 }
 
-// Output returns the color of the fader
-func (f *Fader) Output() (color string) {
+func (f *FadingColorer) color() Color {
+	var color Color
+
 	if f.fading {
 		secondsPassed := float32(time.Now().Sub(f.lastUpdate)) / float32(time.Second)
 		x := secondsPassed / f.Duration
@@ -35,7 +36,21 @@ func (f *Fader) Output() (color string) {
 		color = secondaryColor
 	}
 
-	// color = strings.ToUpper(color)
-
 	return color
 }
+
+// IconColor returns the color of the fader
+func (f *FadingColorer) IconColor() (color Color) {
+	return f.color()
+}
+
+// PrimaryColor returns the color of the fader
+func (f *FadingColorer) PrimaryColor() (color Color) {
+	return f.color()
+}
+
+// SecondaryColor returns the color of the fader
+func (f *FadingColorer) SecondaryColor() (color Color) {
+	return f.color()
+}
+
