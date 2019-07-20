@@ -16,8 +16,8 @@ var mode Mode
 
 // Definitions for Mode
 const (
-	I3JSONMode Mode = iota
-	LemonbarMode
+	LemonbarMode Mode = iota
+	I3JSONMode
 )
 
 // Chain chains status bites together, ensuring that there are no
@@ -28,23 +28,32 @@ func Chain(blocks ...DataBlock) string {
 
 	// huh. increment first until we find a module that
 	// isn't nil or blank (empty for loop)
-	for first = 0; first < len(blocks) && blocks[first] == nil; first++ {
-	}
+	for first = 0; first < len(blocks) && blocks[first] == nil; first++ { }
 
 	// if everything is blank, return a blank string
 	if first >= len(blocks) {
 		return ""
 	}
 
-	final = I3JSONOf(blocks[first])
+	switch mode {
+	case I3JSONMode:
+		final = I3JSONOf(blocks[first])
+	default:
+		final = LemonbarOf(blocks[first])
+	}
 
 	for i := first + 1; i < len(blocks); i++ {
 		if blocks[i] == nil || blocks[i].Hidden() {
 			continue
 		}
-		v := I3JSONOf(blocks[i])
-		if mode == I3JSONMode {
+
+		var v string
+		switch mode {
+		case I3JSONMode:
+			v = I3JSONOf(blocks[i])
 			v = Escape(v);
+		default:
+			v = LemonbarOf(blocks[i])
 		}
 
 		// trim space at the ends
@@ -87,28 +96,23 @@ func cubicEaseArc(x float32) float32 {
 
 func interpolateColors(first, second Color, interpolation float32) (result Color, err error) {
 	// rgbs
-
 	firstInt, err := strconv.ParseInt(first.RGBHex, 16, 64)
 	if err != nil {
 		return
 	}
-
 	secondInt, err := strconv.ParseInt(second.RGBHex, 16, 64)
 	if err != nil {
 		return
 	}
-
 	r1, r2 := (firstInt>>16)&0xFF, (secondInt>>16)&0xFF
 	g1, g2 := (firstInt>>8)&0xFF, (secondInt>>8)&0xFF
 	b1, b2 := firstInt&0xFF, secondInt&0xFF
 
 	// alphas
-
 	a1, err := strconv.ParseInt(first.AlphaHex, 16, 64)
 	if err != nil {
 		return
 	}
-
 	a2, err := strconv.ParseInt(second.AlphaHex, 16, 64)
 	if err != nil {
 		return
@@ -121,8 +125,8 @@ func interpolateColors(first, second Color, interpolation float32) (result Color
 
 	resultRGBInt := r<<16 + g<<8 + b
 
-	result.RGBHex = fmt.Sprintf("%08x", resultRGBInt)
-	result.AlphaHex = fmt.Sprintf("%08x", a)
+	result.RGBHex = fmt.Sprintf("%06x", resultRGBInt)
+	result.AlphaHex = fmt.Sprintf("%02x", a)
 	return
 }
 

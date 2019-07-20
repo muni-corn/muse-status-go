@@ -3,7 +3,6 @@ package format
 import (
 	"fmt"
 	"strings"
-	"time"
 )
 
 // // Urgency is a level of urgency applied to a block
@@ -18,10 +17,16 @@ import (
 // 	UrgencyAlarmPulse
 // )
 
+const (
+	jsonTemplate      = `{"name":"%s","full_text":"%s","short_text":"%s","markup":"pango","separator":true}`
+	pangoTemplate     = `<span color=\"#%s\" font=\"%s\">%s</span>`
+	twoStringTemplate = "%s  %s"
+	lemonTemplate     = "%%{%s} %s"
+)
+
 // DataBlock is a piece of data in the status bar.
 type DataBlock interface {
-	NextUpdateCheckTime() time.Time
-	NeedsUpdate() bool
+	StartBroadcast() <-chan bool // returns a channel that sends signals to update the status bar
 	Update()
 
 	Name() string
@@ -30,30 +35,19 @@ type DataBlock interface {
 
 	Colorer() Colorer
 	Hidden() bool
-	// Urgency() Urgency
 	ForceShort() bool
 }
 
-const (
-	jsonTemplate      = `{"name":"%s","full_text":"%s","short_text":"%s","markup":"pango","separator":true}`
-	pangoTemplate     = `<span color=\"#%s\" font=\"%s\">%s</span>`
-	twoStringTemplate = "%s  %s"
-	lemonTemplate     = "%{%s} %s"
-)
-
-// Alignment specifies where on lemonbar a block should be aligned.
-type Alignment string
-
-// Alignment definitions
-const (
-	Right Alignment = "r"
-	Center = "c"
-	Left = "l"
-)
+// BanneringBlock has the ability to display banners in the status bar
+type BanneringBlock interface {
+	Banner(interpolation float32) string
+	Name() string // used to update banners
+	Activate()
+}
 
 // LemonbarOf a block. returns a string representation of the block that can be
 // parsed by lemonbar
-func LemonbarOf(b DataBlock, align Alignment) string {
+func LemonbarOf(b DataBlock) string {
 	if b.Hidden() {
 		return ""
 	}
@@ -67,14 +61,18 @@ func LemonbarOf(b DataBlock, align Alignment) string {
 		pColor := c.PrimaryColor()
 		sColor := c.SecondaryColor()
 		iColor := c.IconColor()
+
+		// println("block: " + b.Name())
+		// println("icon: " + icon)
+		// println("primary: " + primary)
+		// println("secondary: " + secondary)
 		icon = fmt.Sprintf(lemonTemplate, "F#"+iColor.AlphaHex+iColor.RGBHex, icon)
 		primary = fmt.Sprintf(lemonTemplate, "F#"+pColor.AlphaHex+pColor.RGBHex, primary)
 		secondary = fmt.Sprintf(lemonTemplate, "F#"+sColor.AlphaHex+sColor.RGBHex, secondary)
 	}
 
 	// then align
-	return fmt.Sprintf("%{%s} %s", string(align), icon + "  " + primary + "  " + secondary + "  ");
-	
+	return icon + "  " + primary + "  " + secondary
 }
 
 // I3JSONOf Block b. Turns the information of b into a JSON
@@ -126,35 +124,4 @@ func shortPangoOf(b DataBlock) string {
 	return fmt.Sprintf(twoStringTemplate, icon, primaryText)
 }
 
-func getAlarmPulseColor() Color {
-	return getPulseColor(alarmColor, 1)
-}
-
-func getWarnPulseColor() Color {
-	return getPulseColor(warningColor, 2)
-}
-
-func getDimPulseColor() Color {
-	return getPulseColor(transparentColor, 3);
-}
-
-func getPulseColor(color Color, seconds float32) Color {
-	var result Color
-
-	if color.AlphaHex == "" {
-		color.AlphaHex = "ff"
-	}
-
-	// get alpha byte value. interpolation is a value from
-	// zero to one, calculated by unixMillis/maxMillis
-	maxMillis := 1000 * seconds
-	unixMillis := (time.Now().UnixNano() / int64(time.Millisecond)) % int64(maxMillis)
-	interpolation := cubicEaseArc(float32(unixMillis) / maxMillis)
-
-	result, err := interpolateColors(secondaryColor, color, interpolation)
-	if err != nil {
-		result = alarmColor
-	}
-
-	return result
-}
+// vim: foldmethod=syntax

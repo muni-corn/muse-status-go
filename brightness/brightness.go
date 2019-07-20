@@ -1,19 +1,5 @@
 package brightness
 
-import (
-	"github.com/muni-corn/muse-status/utils"
-	"strconv"
-	"time"
-)
-
-func getMaxBrightness() (value int, err error) {
-	return utils.GetIntFromFile(baseDir + card + "/max_brightness")
-}
-
-func getCurrentBrightness() (value int, err error) {
-	return utils.GetIntFromFile(baseDir + card + "/brightness")
-}
-
 func getIcon(percentage int) rune {
 	index := percentage * len(brightnessIcons) / 100
 

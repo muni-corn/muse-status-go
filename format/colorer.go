@@ -2,25 +2,36 @@ package format
 
 import (
 	"strconv"
+	"time"
 )
 
-var primaryColor = Color{
+var primaryColor = Color{ // {{{
 	RGBHex: "ffffff",
 	AlphaHex: "ff",
-}
-var secondaryColor = Color{
+} // }}}
+var secondaryColor = Color{ // {{{
 	RGBHex: "ffffff",
 	AlphaHex: "c0",
-}
-var transparentColor = Color {
+} // }}}
+var transparentColor = Color { // {{{
 	RGBHex: secondaryColor.RGBHex,
 	AlphaHex: "00",
-}
-var warningColor = Color{
+} // }}}
+var warningColor = Color{ // {{{
 	RGBHex: "ffaa00",
-}
-var alarmColor = Color{
+} // }}}
+var alarmColor = Color{ // {{{
 	RGBHex: "ff0000",
+} // }}}
+
+// PrimaryColor exposes the primaryColor to other packages
+func PrimaryColor() Color {
+	return primaryColor
+}
+
+// SecondaryColor exposes the secondaryColor to other packages
+func SecondaryColor() Color {
+	return secondaryColor
 }
 
 // Color represents a color in RRGGBB form. There is also an Alpha that can be
@@ -209,5 +220,38 @@ func (d pulseColorer) SecondaryColor() Color {
 	return getDimPulseColor()
 }
 // }}}
+
+func getAlarmPulseColor() Color { // {{{
+	return getPulseColor(alarmColor, 1)
+} // }}}
+
+func getWarnPulseColor() Color { // {{{
+	return getPulseColor(warningColor, 2)
+} // }}}
+
+func getDimPulseColor() Color { // {{{
+	return getPulseColor(transparentColor, 3)
+} // }}}
+
+func getPulseColor(color Color, seconds float32) Color { // {{{
+	var result Color
+
+	if color.AlphaHex == "" {
+		color.AlphaHex = "ff"
+	}
+
+	// get alpha byte value. interpolation is a value from
+	// zero to one, calculated by unixMillis/maxMillis
+	maxMillis := 1000 * seconds
+	unixMillis := (time.Now().UnixNano() / int64(time.Millisecond)) % int64(maxMillis)
+	interpolation := cubicEaseArc(float32(unixMillis) / maxMillis)
+
+	result, err := interpolateColors(secondaryColor, color, interpolation)
+	if err != nil {
+		result = alarmColor
+	}
+
+	return result
+} // }}}
 
 // vim: foldmethod=marker

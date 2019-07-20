@@ -7,8 +7,8 @@ import (
 // FadingColorer creates a fading effect between two colors.
 type FadingColorer struct {
 	Duration   float32
-	StartColor string
-	EndColor   string
+	StartColor Color
+	EndColor   Color
 
 	lastUpdate time.Time
 	fading     bool
@@ -20,6 +20,10 @@ func (f *FadingColorer) Trigger() {
 	f.lastUpdate = time.Now()
 }
 
+func (f *FadingColorer) IsFading() bool {
+	return f.fading
+}
+
 func (f *FadingColorer) color() Color {
 	var color Color
 
@@ -27,13 +31,13 @@ func (f *FadingColorer) color() Color {
 		secondsPassed := float32(time.Now().Sub(f.lastUpdate)) / float32(time.Second)
 		x := secondsPassed / f.Duration
 		x = x * x * x * x * x // quintic interpolation
-		color, _ = interpolateColors(primaryColor, secondaryColor, x)
+		color, _ = interpolateColors(f.StartColor, f.EndColor, x)
 
 		if secondsPassed > f.Duration {
 			f.fading = false
 		}
 	} else {
-		color = secondaryColor
+		color = f.EndColor
 	}
 
 	return color

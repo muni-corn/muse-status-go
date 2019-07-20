@@ -8,8 +8,8 @@ import (
 
 // Block is a block that transmits time and date data
 type Block struct {
-	now    time.Time
-	nextTime time.Time
+	now        time.Time
+	nextTime   time.Time
 	nextUpdate time.Time
 }
 
@@ -19,15 +19,20 @@ func NewDateBlock() *Block {
 	return b
 }
 
-// NextUpdateCheckTime is a function that does exactly what it says it does
-func (b *Block) NextUpdateCheckTime() time.Time {
-	return b.nextUpdate
+func (b *Block) StartBroadcast() <-chan bool {
+	c := make(chan bool)
+	go b.broadcast(c)
+	return c
 }
 
-// NeedsUpdate returns true if the clock is out of date
-func (b *Block) NeedsUpdate() bool {
-	b.nextTime = time.Now().Truncate(time.Minute)
-	return b.now.Truncate(time.Minute) != b.nextTime
+func (b *Block) broadcast(c chan<- bool) {
+	for {
+		if time.Now().After(b.nextUpdate) {
+			b.Update()
+			c <- true
+		}
+		time.Sleep(b.nextUpdate.Sub(time.Now()))
+	}
 }
 
 // Update updates the clock
