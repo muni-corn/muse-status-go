@@ -15,41 +15,51 @@ type Block struct {
 	chargeNow, chargeFull int
 
 	nextUpdateTime time.Time
-	nextStatus ChargeStatus
-	nextChargeNow int
 }
 
-// NewBlock returns a new sbattery block
-func NewBlock(battery string) (*Block, error) {
+// NewSmartBatteryBlock returns a new sbattery block
+func NewSmartBatteryBlock(battery string) (*Block, error) {
 	b := &Block{battery: battery}
 
+	var err error
 	b.chargeFull, err = utils.GetIntFromFile(b.getBaseDir()+"charge_full")
 	if err != nil {
 		return nil, err
 	}
+
+	return b, nil
 }
 
-// NextUpdateCheckTime returns the next time at which there should be a check
-// for an update
-func (b *Block) NextUpdateCheckTime() time.Time {
-	return b.nextUpdateTime
+// StartBroadcast starts broadcasting from this block. It returns a channel
+// that sends output when an update should happen
+func (b *Block) StartBroadcast() <-chan bool {
+	c := make(chan bool)
+	go b.broadcast(c)
+	return c
 }
 
-func (b *Block) NeedsUpdate() bool {
-	b.nextChargeNow, err := utils.GetIntFromFile(b.getBaseDir()+"charge_now")
-	if err != nil {
-		return false
+func (b *Block) broadcast(c chan<- bool) {
+	for {
+		// store old values
+		// use percentage for less aggressive updating
+		oldPercentage := b.chargeNow / b.chargeFull
+		oldStatus := b.status
+		b.Update()
+
+		newPercentage := b.chargeNow / b.chargeFull
+		if (b.status != oldStatus || newPercentage != oldPercentage) {
+			c <- true
+		}
+
+		// wait until next update check
+		time.Sleep(b.nextUpdateTime.Sub(time.Now()))
 	}
-	b.nextStatus, err = b.getBatteryStatus()
-	if err != nil {
-		return false
-	}
-	return b.nextChargeNow != b.chargeNow || b.status != b.nextStatus
 }
 
 func (b *Block) Update() {
-	b.chargeNow = b.nextChargeNow
-	b.status = b.nextStatus
+	b.chargeNow, _ = utils.GetIntFromFile(b.getBaseDir()+"charge_now")
+	b.status, _ = b.getBatteryStatus()
+
 	b.nextUpdateTime = time.Now().Add(time.Second * 5)
 }
 
@@ -67,10 +77,11 @@ func (b *Block) Icon() rune {
 func (b *Block) Text() (primary, secondary string) {
 	primary = strconv.Itoa(b.getBatteryPercentage()) + "%"
 	secondary = string(b.status)
+	return
 }
 
 // Colorer returns a colorer depnding on the percentage left on this battery
-func (b *Block) Colorer() Colorer {
+func (b *Block) Colorer() format.Colorer {
 	perc := b.getBatteryPercentage()
 	switch {
 	case perc <= 15:
@@ -87,23 +98,22 @@ func (b *Block) Hidden() bool {
 	return b.status == Full
 }
 
-// ForceShort never forces shorting
+// ForceShort never happens; return false
 func (b *Block) ForceShort() bool {
-	return false
+	return false;
 }
 
 func (b *Block) getBatteryPercentage() int {
 	return b.chargeNow * 100 / b.chargeFull
 }
 
-func (b *Block) updateBatteryStatus() error {
+func (b *Block) getBatteryStatus() (ChargeStatus, error) {
 	str, err := utils.GetStringFromFile(b.getBaseDir()+"status")
 	if err != nil {
-		return err
+		return Unknown, err
 	}
 
-	b.status = ChargeStatus(str)
-	return nil
+	return ChargeStatus(str), nil
 }
 
 func (b *Block) getBaseDir() string {

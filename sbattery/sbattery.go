@@ -3,12 +3,6 @@
 package sbattery
 
 import (
-	"github.com/muni-corn/muse-status/format"
-	"github.com/muni-corn/muse-status/utils"
-	"os/exec"
-	"regexp"
-	"strconv"
-	"strings"
 	"time"
 )
 
