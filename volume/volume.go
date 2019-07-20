@@ -1,11 +1,11 @@
 package volume
 
 import (
-	"github.com/muni-corn/muse-status/format"
+	// "github.com/muni-corn/muse-status/format"
 	"os/exec"
 	"regexp"
 	"strconv"
-	"time"
+	// "time"
 )
 
 var (
@@ -15,60 +15,60 @@ var (
 	onOffRegex      = regexp.MustCompile(`\[([A-z]*?)\]`) // matches 'on' or 'off' within square brackets
 )
 
-// StartVolumeBroadcast returns a channel that is fed audio volume information
-func StartVolumeBroadcast() chan *format.FadingBlock {
-	channel := make(chan *format.FadingBlock)
-	block := &format.FadingBlock{Name: "volume"}
+// StartVolumeBroadcast returns a channel that is fed audio volume information {{{
+// func StartVolumeBroadcast() chan *format.FadingBlock {
+// 	channel := make(chan *format.FadingBlock)
+// 	block := &format.FadingBlock{Name: "volume"}
 
-	go func() {
-		lastVolume := -2
+// 	go func() {
+// 		lastVolume := -2
 
-		// loop
-		for {
-			// get current volume
-			current, err := getCurrentVolume()
+// 		// loop
+// 		for {
+// 			// get current volume
+// 			current, err := getCurrentVolume()
 
-			// check for an error, continue if there is one
-			if err != nil {
-				println("Error getting volume: " + err.Error())
-				time.Sleep(2 * time.Second)
-				continue
-			}
+// 			// check for an error, continue if there is one
+// 			if err != nil {
+// 				println("Error getting volume: " + err.Error())
+// 				time.Sleep(2 * time.Second)
+// 				continue
+// 			}
 
-			// if the volume has changed
-			if current != lastVolume {
+// 			// if the volume has changed
+// 			if current != lastVolume {
 
-				var icon rune
-				var text string
-				if current <= 0 {
-					icon = muteIcon
-					text = "Muted"
-				} else {
-					icon = getIcon(current)
-					text = strconv.Itoa(current) + "%"
-				}
+// 				var icon rune
+// 				var text string
+// 				if current <= 0 {
+// 					icon = muteIcon
+// 					text = "Muted"
+// 				} else {
+// 					icon = getIcon(current)
+// 					text = strconv.Itoa(current) + "%"
+// 				}
 
-				block.Set(icon, text)
-				block.Trigger()
-				channel <- block
+// 				block.Set(icon, text)
+// 				block.Trigger()
+// 				channel <- block
 
-				// update old data
-				lastVolume = current
-			}
+// 				// update old data
+// 				lastVolume = current
+// 			}
 
-			// animate
-			if block.Fading() {
-				// faster framerate
-				channel <- block
-				time.Sleep(time.Second / 20)
-			} else {
-				time.Sleep(time.Second / 5)
-			}
-		}
-	}()
+// 			// animate
+// 			if block.Fading() {
+// 				// faster framerate
+// 				channel <- block
+// 				time.Sleep(time.Second / 20)
+// 			} else {
+// 				time.Sleep(time.Second / 5)
+// 			}
+// 		}
+// 	}()
 
-	return channel
-}
+// 	return channel
+// } // }}}
 
 // returns the current volume percentage as an int, or zero
 // if muted
@@ -91,6 +91,10 @@ func getCurrentVolume() (percentage int, err error) {
 }
 
 func getIcon(percentage int) rune {
+	if (percentage <= 0) {
+		return muteIcon
+	}
+
 	index := percentage * len(volumeIcons) / 100
 
 	// constrain index (should never go below zero)
@@ -100,3 +104,5 @@ func getIcon(percentage int) rune {
 
 	return volumeIcons[index]
 }
+
+// vim: foldmethod=marker

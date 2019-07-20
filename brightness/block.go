@@ -33,7 +33,7 @@ type Block struct {
 // NewBrightnessBlock returns a new brightness.Block
 func NewBrightnessBlock(card string) (*Block, error) {
 	b := &Block{
-		card:  card,
+		card: card,
 	}
 
 	var err error
