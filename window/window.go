@@ -1,19 +1,16 @@
 package window
 
-// import (
-// 	"github.com/muni-corn/muse-status/date"
-// 	"github.com/muni-corn/muse-status/format"
+import (
+	"github.com/muni-corn/muse-status/date"
 
-// 	"os/exec"
-// 	"regexp"
-// 	"strings"
-// 	"time"
-// 	// "encoding/json"
-// )
+	"os/exec"
+	"strings"
+	"regexp"
+)
 
-// var (
-// 	lineReturnRegex = regexp.MustCompile(`\r?\n`)
-// )
+var (
+	lineReturnRegex = regexp.MustCompile(`\r?\n`)
+)
 
 // // StartWindowBroadcast returns a string channel that is fed info about the
 // // current active window. If no window is active, it is fed a greeting or
@@ -39,7 +36,7 @@ package window
 // 	return channel
 // }
 
-// func window() string {
+// func swayWindow() string {
 // 	// get sway tree
 // 	cmdOutput, err := exec.Command("swaymsg", "-t", "get_tree").Output()
 // 	if err != nil {
@@ -55,3 +52,19 @@ package window
 
 // 	return format.Dim(output)
 // }
+
+func xWindow() string {
+	cmdOutput, err := exec.Command("xdotool", "getwindowfocus", "getwindowname").Output()
+	if err != nil {
+		return date.GetGreeting()
+	}
+
+ 	window := string(cmdOutput)
+ 	if window == "i3" || strings.TrimSpace(window) == "" {
+ 		window = date.GetGreeting()
+ 	} else {
+ 		window = lineReturnRegex.ReplaceAllString(window, "")
+ 	}
+
+ 	return window
+}
