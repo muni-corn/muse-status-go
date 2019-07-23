@@ -40,19 +40,25 @@ func (b *Block) StartBroadcast() <-chan bool {
 
 func (b *Block) broadcast(c chan<- bool) {
 	for {
-		// store old values
-		// use percentage for less aggressive updating
-		oldPercentage := b.chargeNow / b.chargeFull
-		oldStatus := b.status
-		b.Update()
+		if time.Now().After(b.nextUpdateTime) {
+			// store old values
+			// use percentage for less aggressive updating
+			oldPercentage := b.chargeNow / b.chargeFull
+			oldStatus := b.status
+			b.Update()
 
-		newPercentage := b.chargeNow / b.chargeFull
-		if (b.status != oldStatus || newPercentage != oldPercentage) {
-			c <- true
+			newPercentage := b.chargeNow / b.chargeFull
+			if (b.status != oldStatus || newPercentage != oldPercentage) {
+				c <- true
+			}
 		}
 
-		// wait until next update check
-		time.Sleep(b.nextUpdateTime.Sub(time.Now()))
+		if b.getBatteryPercentage() <= 30 && b.status == Discharging {
+			c <- true
+			time.Sleep(time.Second / 10)
+		} else {
+			time.Sleep(b.nextUpdateTime.Sub(time.Now()))
+		}
 	}
 }
 
@@ -82,6 +88,10 @@ func (b *Block) Text() (primary, secondary string) {
 
 // Colorer returns a colorer depnding on the percentage left on this battery
 func (b *Block) Colorer() format.Colorer {
+	if b.status == Charging {
+		return format.GetDefaultColorer()
+	}
+
 	perc := b.getBatteryPercentage()
 	switch {
 	case perc <= 15:
@@ -101,6 +111,10 @@ func (b *Block) Hidden() bool {
 // ForceShort never happens; return false
 func (b *Block) ForceShort() bool {
 	return false;
+}
+
+func (b *Block) Output(mode format.Mode) string {
+	return format.LemonbarOf(b)
 }
 
 func (b *Block) getBatteryPercentage() int {

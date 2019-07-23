@@ -30,12 +30,18 @@ type DataBlock interface {
 	Update()
 
 	Name() string
-	Icon() rune
-	Text() (primary, secondary string)
-
-	Colorer() Colorer
 	Hidden() bool
 	ForceShort() bool
+
+	Output(mode Mode) string
+}
+
+type ClassicBlock interface {
+	DataBlock
+
+	Text() (primary, secondary string)
+	Icon() rune
+	Colorer() Colorer
 }
 
 // BanneringBlock has the ability to display banners in the status bar
@@ -47,7 +53,7 @@ type BanneringBlock interface {
 
 // LemonbarOf a block. returns a string representation of the block that can be
 // parsed by lemonbar
-func LemonbarOf(b DataBlock) string {
+func LemonbarOf(b ClassicBlock) string {
 	if b.Hidden() {
 		return ""
 	}
@@ -77,7 +83,7 @@ func LemonbarOf(b DataBlock) string {
 
 // I3JSONOf Block b. Turns the information of b into a JSON
 // object for the i3 status protocol
-func I3JSONOf(b DataBlock) string {
+func I3JSONOf(b ClassicBlock) string {
 	if b.Hidden() {
 		return ""
 	}
@@ -98,7 +104,7 @@ func I3JSONOf(b DataBlock) string {
 	return fmt.Sprintf(jsonTemplate, b.Name(), fullText, shortText)
 }
 
-func fullPangoOf(b DataBlock) string {
+func fullPangoOf(b ClassicBlock) string {
 	secondaryRawText, _ := b.Text()
 	var secondaryText string
 	if secondaryRawText != "" {
@@ -108,7 +114,7 @@ func fullPangoOf(b DataBlock) string {
 	return fmt.Sprintf(twoStringTemplate, shortPangoOf(b), secondaryText)
 }
 
-func shortPangoOf(b DataBlock) string {
+func shortPangoOf(b ClassicBlock) string {
 	iconRaw := b.Icon()
 	primaryRawText, _ := b.Text()
 

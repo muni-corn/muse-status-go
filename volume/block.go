@@ -82,3 +82,7 @@ func (b *Block) Hidden() bool {
 func (b *Block) ForceShort() bool {
 	return false
 }
+
+func (b *Block) Output(mode format.Mode) string {
+	return format.LemonbarOf(b)
+}

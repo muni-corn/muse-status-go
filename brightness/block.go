@@ -135,3 +135,6 @@ func (b *Block) getCurrentBrightness() (value int, err error) {
 	return utils.GetIntFromFile(baseDir + b.card + "/brightness")
 }
 
+func (b *Block) Output(mode format.Mode) string {
+	return format.LemonbarOf(b)
+}

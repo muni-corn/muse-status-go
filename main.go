@@ -10,7 +10,7 @@ import (
 	"github.com/muni-corn/muse-status/sbattery"
 	"github.com/muni-corn/muse-status/volume"
 	// "github.com/muni-corn/muse-status/weather"
-	// "github.com/muni-corn/muse-status/window"
+	"github.com/muni-corn/muse-status/window"
 	"os"
 	// "time"
 )
@@ -49,13 +49,15 @@ func lemonbarStatus() {
 	brightnessBlock, _ := brightness.NewBrightnessBlock("amdgpu_bl0")
 	dateBlock := date.NewDateBlock()
 	volumeBlock := volume.NewVolumeBlock()
+	windowBlock := window.NewWindowBlock()
 
 	dateChan := dateBlock.StartBroadcast()
 	brightnessChan := brightnessBlock.StartBroadcast()
 	batteryChan := batteryBlock.StartBroadcast()
 	volumeChan := volumeBlock.StartBroadcast()
+	windowChan := windowBlock.StartBroadcast()
 
-	leftModules := []format.DataBlock{};
+	leftModules := []format.DataBlock{windowBlock};
 	middleModules := []format.DataBlock{dateBlock};
 	rightModules := []format.DataBlock{brightnessBlock, volumeBlock, batteryBlock};
 
@@ -66,6 +68,7 @@ func lemonbarStatus() {
 		case <-brightnessChan:
 		case <-batteryChan:
 		case <-volumeChan:
+		case <-windowChan:
 		}
 
 		l := format.Chain(leftModules...)

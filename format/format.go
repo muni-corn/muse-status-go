@@ -35,12 +35,7 @@ func Chain(blocks ...DataBlock) string {
 		return ""
 	}
 
-	switch mode {
-	case I3JSONMode:
-		final = I3JSONOf(blocks[first])
-	default:
-		final = LemonbarOf(blocks[first])
-	}
+	final = blocks[first].Output(mode)
 
 	for i := first + 1; i < len(blocks); i++ {
 		if blocks[i] == nil || blocks[i].Hidden() {
@@ -50,10 +45,10 @@ func Chain(blocks ...DataBlock) string {
 		var v string
 		switch mode {
 		case I3JSONMode:
-			v = I3JSONOf(blocks[i])
+			v = blocks[i].Output(mode)
 			v = Escape(v);
 		default:
-			v = LemonbarOf(blocks[i])
+			v = blocks[i].Output(mode)
 		}
 
 		// trim space at the ends
