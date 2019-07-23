@@ -55,7 +55,7 @@ func (b *Block) broadcast(c chan<- bool) {
 
 		if b.getBatteryPercentage() <= 30 && b.status == Discharging {
 			c <- true
-			time.Sleep(time.Second / 10)
+			time.Sleep(time.Second / 15)
 		} else {
 			time.Sleep(b.nextUpdateTime.Sub(time.Now()))
 		}
