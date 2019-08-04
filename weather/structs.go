@@ -1,6 +1,6 @@
 package weather
 
-type location struct {
+type WeatherLocation struct {
 	Latitude  float32 `json:"latitude"`
 	Longitude float32 `json:"longitude"`
 }

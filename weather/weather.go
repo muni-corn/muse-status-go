@@ -4,11 +4,11 @@ import (
     "bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/muni-corn/muse-status/format"
+	// "github.com/muni-corn/muse-status/format"
 	"io/ioutil"
 	"net/http"
 	"strconv"
-	"time"
+	// "time"
 	"unicode"
 )
 
@@ -68,40 +68,40 @@ var (
 
 // StartWeatherBroadcast returns a string channel that is fed weather
 // information
-func StartWeatherBroadcast() chan *format.ClassicBlock {
-	channel := make(chan *format.ClassicBlock)
-	block := &format.ClassicBlock{Name: "weather"}
+// func StartWeatherBroadcast() chan *format.ClassicBlock {
+// 	channel := make(chan *format.ClassicBlock)
+// 	block := &format.ClassicBlock{Name: "weather"}
 
-	go func() {
-		for {
-			loc, err := getLocation()
-			if err != nil {
-				println("Weather couldn't get the location. Retrying in 10 seconds.")
-				time.Sleep(time.Second * 10)
-				continue
-			}
+// 	go func() {
+// 		for {
+// 			loc, err := getLocation()
+// 			if err != nil {
+// 				println("Weather couldn't get the location. Retrying in 10 seconds.")
+// 				time.Sleep(time.Second * 10)
+// 				continue
+// 			}
 
-			report, err := getFullWeatherReport(*loc)
-			if err != nil || len(report.Weather) <= 0 {
-				println("Weather couldn't get a weather report. Retrying in 10 seconds.")
-				time.Sleep(time.Second * 10)
-				continue
-			}
+// 			report, err := getFullWeatherReport(*loc)
+// 			if err != nil || len(report.Weather) <= 0 {
+// 				println("Weather couldn't get a weather report. Retrying in 10 seconds.")
+// 				time.Sleep(time.Second * 10)
+// 				continue
+// 			}
 
-			icon := getWeatherIcon(report)
-			temperature := getTemperatureString(report)
-			description := getWeatherDescription(report)
+// 			icon := getWeatherIcon(report)
+// 			temperature := getTemperatureString(report)
+// 			description := getWeatherDescription(report)
 
-			block.Set(format.UrgencyNormal, icon, temperature, description)
+// 			block.Set(format.UrgencyNormal, icon, temperature, description)
 
-			channel <- block
+// 			channel <- block
 
-			time.Sleep(time.Minute * updateIntervalMinutes)
-		}
-	}()
+// 			time.Sleep(time.Minute * updateIntervalMinutes)
+// 		}
+// 	}()
 
-	return channel
-}
+// 	return channel
+// }
 
 func getExternalIP() (string, error) {
     resp, err := http.Get("http://checkip.amazonaws.com")
@@ -152,7 +152,7 @@ func getWeatherDescription(report fullWeatherReport) string {
 	return string(desc)
 }
 
-func getLocation() (*location, error) {
+func getLocation() (*WeatherLocation, error) {
     ip, err := getExternalIP()
     if err != nil {
         return nil, err
@@ -168,7 +168,6 @@ func getLocation() (*location, error) {
 	defer res.Body.Close()
 
 	// get response as a []byte
-	var loc location
 	resBodyStr, err := ioutil.ReadAll(res.Body)
     println(string(resBodyStr))
 	if err != nil {
@@ -176,6 +175,7 @@ func getLocation() (*location, error) {
 	}
 
 	// decode json
+	var loc WeatherLocation
 	json.Unmarshal(resBodyStr, &loc)
 
     println(fmt.Sprintf("location: %f, %f", loc.Latitude, loc.Longitude))
@@ -183,7 +183,10 @@ func getLocation() (*location, error) {
 	return &loc, nil
 }
 
-func getFullWeatherReport(loc location) (report fullWeatherReport, err error) {
+func getFullWeatherReport(loc *WeatherLocation) (report fullWeatherReport, err error) {
+	if loc == nil {
+		return fullWeatherReport{}, fmt.Errorf("nil location given, can't get weather report")
+	}
 	reqURL := fmt.Sprintf(openWeatherMapURLTemplate, loc.Latitude, loc.Longitude, openWeatherMapKey, units)
 	res, err := http.Get(reqURL)
 	if err != nil {
