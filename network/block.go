@@ -4,6 +4,7 @@ import (
 	"github.com/mdlayher/wifi"
 	"github.com/muni-corn/muse-status/format"
 
+	"fmt"
 	"time"
 	"errors"
 )
@@ -16,6 +17,8 @@ type Block struct {
 	currentSSID string
 	currentStrengthPct int
 	currentStatus	  networkStatus
+
+	dBm int
 
 	lastSSID string
 	lastStrengthPct int
@@ -94,8 +97,8 @@ func (b *Block) Update() {
 
 	if len(infos) > 0 {
 		// only going to worry about the first
-		dbm := infos[0].Signal
-		b.currentStrengthPct = int(dBmToPercentage(float32(dbm)))
+		b.dBm = infos[0].Signal
+		b.currentStrengthPct = int(dBmToPercentage(float32(b.dBm)))
 	} else {
 		b.currentStatus = disconnectedStatus
 		return
@@ -117,8 +120,8 @@ func (b *Block) Update() {
 }
 
 const (
-	signalMaxDBm = -20
-	noiseFloorDBm = -90
+	signalMaxDBm = -30
+	noiseFloorDBm = -80
 )
 
 // thank u to i3status and NetworkManager :)
@@ -130,7 +133,7 @@ func dBmToPercentage(dbm float32) float32 {
 		dbm = signalMaxDBm
 	}
 
-	return -0.008*dbm*dbm + 0.2*dbm + 100
+	return -0.04 * float32(dbm + 30) * float32(dbm + 30) + 100.0
 }
 
 // Name returns "network"
@@ -145,7 +148,11 @@ func (b *Block) Icon() rune {
 
 // Text returns the ssid as primary, the status as secondary
 func (b *Block) Text() (primary, secondary string) {
-	return b.currentSSID, string(b.currentStatus)
+	if b.currentStatus == connectedStatus {
+		return b.currentSSID, fmt.Sprintf("%d dBm", b.dBm)
+	} else {
+		return b.currentSSID, string(b.currentStatus)
+	}
 }
 
 // Colorer returns the default colorer
