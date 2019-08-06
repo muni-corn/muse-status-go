@@ -7,7 +7,7 @@ import (
 	"github.com/muni-corn/muse-status/date"
 	"github.com/muni-corn/muse-status/format"
 	// "github.com/muni-corn/muse-status/mpd"
-	// "github.com/muni-corn/muse-status/network"
+	"github.com/muni-corn/muse-status/network"
 	"github.com/muni-corn/muse-status/playerctl"
 	"github.com/muni-corn/muse-status/sbattery"
 	"github.com/muni-corn/muse-status/volume"
@@ -51,6 +51,7 @@ func lemonbarStatus() {
 	batteryBlock, _ := sbattery.NewSmartBatteryBlock("BAT0")
 	brightnessBlock, _ := brightness.NewBrightnessBlock("amdgpu_bl0")
 	dateBlock := date.NewDateBlock()
+	networkBlock, _ := network.NewNetworkBlock("wlo1")
 	playerctlBlock := playerctl.NewPlayerctlBlock()
 	volumeBlock := volume.NewVolumeBlock()
 	windowBlock := window.NewWindowBlock()
@@ -60,6 +61,7 @@ func lemonbarStatus() {
 	playerctlChan := playerctlBlock.StartBroadcast()
 	brightnessChan := brightnessBlock.StartBroadcast()
 	batteryChan := batteryBlock.StartBroadcast()
+	networkChan := networkBlock.StartBroadcast()
 	volumeChan := volumeBlock.StartBroadcast()
 	windowChan := windowBlock.StartBroadcast()
 	bspwmChan := bspwmBlock.StartBroadcast()
@@ -67,7 +69,7 @@ func lemonbarStatus() {
 
 	leftModules := []format.DataBlock{bspwmBlock, windowBlock};
 	middleModules := []format.DataBlock{dateBlock, weatherBlock, playerctlBlock};
-	rightModules := []format.DataBlock{brightnessBlock, volumeBlock, batteryBlock};
+	rightModules := []format.DataBlock{brightnessBlock, volumeBlock, networkBlock, batteryBlock};
 
 	for {
 		// hold until an update
@@ -75,6 +77,7 @@ func lemonbarStatus() {
 		case <-dateChan:
 		case <-brightnessChan:
 		case <-batteryChan:
+		case <-networkChan:
 		case <-volumeChan:
 		case <-windowChan:
 		case <-bspwmChan:
