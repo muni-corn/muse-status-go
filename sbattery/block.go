@@ -7,19 +7,29 @@ import (
 	"strconv"
 )
 
+type read struct {
+	at time.Time
+	status ChargeStatus
+	charge int
+}
+
 // Block is a data block for sbattery
 type Block struct {
-	battery string
+	warningLevel int
+	alarmLevel int
 
-	status ChargeStatus
-	chargeNow, chargeFull int
+	battery string
+	chargeFull int
+
+	lastAnchorRead read // last time the status of the battery changed, used for calculating time remaining
+	currentRead read
 
 	nextUpdateTime time.Time
 }
 
 // NewSmartBatteryBlock returns a new sbattery block
-func NewSmartBatteryBlock(battery string) (*Block, error) {
-	b := &Block{battery: battery}
+func NewSmartBatteryBlock(battery string, warningLevel, alarmLevel int) (*Block, error) {
+	b := &Block{battery: battery, warningLevel: warningLevel, alarmLevel: alarmLevel}
 
 	var err error
 	b.chargeFull, err = utils.GetIntFromFile(b.getBaseDir()+"charge_full")
@@ -43,17 +53,18 @@ func (b *Block) broadcast(c chan<- bool) {
 		if time.Now().After(b.nextUpdateTime) {
 			// store old values
 			// use percentage for less aggressive updating
-			oldPercentage := b.chargeNow / b.chargeFull
-			oldStatus := b.status
+			oldPercentage := b.currentRead.charge / b.chargeFull
+			oldStatus := b.currentRead.status
+
 			b.Update()
 
-			newPercentage := b.chargeNow / b.chargeFull
-			if (b.status != oldStatus || newPercentage != oldPercentage) {
+			newPercentage := b.currentRead.charge / b.chargeFull
+			if (b.currentRead.status != oldStatus || newPercentage != oldPercentage) {
 				c <- true
 			}
 		}
 
-		if b.getBatteryPercentage() <= 30 && b.status == Discharging {
+		if b.getBatteryPercentage() <= b.warningLevel && b.currentRead.status == Discharging {
 			c <- true
 			time.Sleep(time.Second / 15)
 		} else {
@@ -63,10 +74,17 @@ func (b *Block) broadcast(c chan<- bool) {
 }
 
 func (b *Block) Update() {
-	b.chargeNow, _ = utils.GetIntFromFile(b.getBaseDir()+"charge_now")
-	b.status, _ = b.getBatteryStatus()
-
 	b.nextUpdateTime = time.Now().Add(time.Second * 5)
+
+	newRead, err := b.getNewRead()
+	if err != nil {
+		return
+	}
+
+	b.currentRead = newRead
+	if b.currentRead.status != b.lastAnchorRead.status {
+		b.lastAnchorRead = b.currentRead
+	}
 }
 
 // Name returns "battery"
@@ -76,27 +94,39 @@ func (b *Block) Name() string {
 
 // Icon returns a battery icon
 func (b *Block) Icon() rune {
-	return getBatteryIcon(b.status, b.getBatteryPercentage())
+	return getBatteryIcon(b.currentRead.status, b.getBatteryPercentage())
 }
+
+const timeFormat = "3:04 pm"
 
 // Text returns all the text
 func (b *Block) Text() (primary, secondary string) {
 	primary = strconv.Itoa(b.getBatteryPercentage()) + "%"
-	secondary = string(b.status)
+
+	var prefix string
+	switch b.currentRead.status {
+	case Charging:
+		prefix = "Full at"
+	case Discharging:
+		prefix = "Until"
+	default:
+		return
+	}
+	secondary = prefix + " " + b.getCompletionTime().Format(timeFormat)
 	return
 }
 
 // Colorer returns a colorer depnding on the percentage left on this battery
 func (b *Block) Colorer() format.Colorer {
-	if b.status == Charging {
+	if b.currentRead.status == Charging {
 		return format.GetDefaultColorer()
 	}
 
 	perc := b.getBatteryPercentage()
 	switch {
-	case perc <= 15:
+	case perc <= b.alarmLevel:
 		return format.GetAlarmColorer()
-	case perc <= 30:
+	case perc <= b.warningLevel:
 		return format.GetWarningColorer()
 	default:
 		return format.GetDefaultColorer()
@@ -105,7 +135,7 @@ func (b *Block) Colorer() format.Colorer {
 
 // Hidden when status is Full
 func (b *Block) Hidden() bool {
-	return b.status == Full
+	return b.currentRead.status == Full
 }
 
 // ForceShort never happens; return false
@@ -117,8 +147,32 @@ func (b *Block) Output(mode format.Mode) string {
 	return format.LemonbarOf(b)
 }
 
+func (b *Block) getNewRead() (read, error) {
+	r := read{}
+
+	charge, err := b.getBatteryCharge()
+	if err != nil {
+		return r, err
+	}
+
+	status, err := b.getBatteryStatus()
+	if err != nil {
+		return r, err
+	}
+
+	r.charge = charge
+	r.status = status
+	r.at = time.Now()
+
+	return r, nil
+}
+
+func (b *Block) getBatteryCharge() (int, error) {
+	return utils.GetIntFromFile(b.getBaseDir()+"charge_now")
+}
+
 func (b *Block) getBatteryPercentage() int {
-	return b.chargeNow * 100 / b.chargeFull
+	return b.currentRead.charge * 100 / b.chargeFull
 }
 
 func (b *Block) getBatteryStatus() (ChargeStatus, error) {
@@ -132,4 +186,19 @@ func (b *Block) getBatteryStatus() (ChargeStatus, error) {
 
 func (b *Block) getBaseDir() string {
 	return SysPowerSupplyBaseDir + "/" + b.battery + "/"
+}
+
+func (b *Block) getCompletionTime() time.Time {
+	var end int
+	switch b.currentRead.status {
+	case Discharging:
+		end = 0
+	case Charging:
+		end = b.chargeFull
+	}
+
+	// duration (nanosecond?) per charge unit
+	rate := float64(b.currentRead.at.Sub(b.lastAnchorRead.at)) / float64(b.currentRead.charge - b.lastAnchorRead.charge)
+	timeLeft := float64(end-b.currentRead.charge) * rate
+	return time.Now().Add(time.Duration(timeLeft))
 }

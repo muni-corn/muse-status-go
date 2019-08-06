@@ -48,7 +48,7 @@ func main() {
 
 func lemonbarStatus() {
 	bspwmBlock := bspwm.NewBSPWMBlock()
-	batteryBlock, _ := sbattery.NewSmartBatteryBlock("BAT0")
+	batteryBlock, _ := sbattery.NewSmartBatteryBlock("BAT0", 30, 15)
 	brightnessBlock, _ := brightness.NewBrightnessBlock("amdgpu_bl0")
 	dateBlock := date.NewDateBlock()
 	networkBlock, _ := network.NewNetworkBlock("wlo1")
