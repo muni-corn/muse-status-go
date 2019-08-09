@@ -4,7 +4,6 @@ import (
 	"github.com/mdlayher/wifi"
 	"github.com/muni-corn/muse-status/format"
 
-	"fmt"
 	"time"
 	"errors"
 )
@@ -148,11 +147,7 @@ func (b *Block) Icon() rune {
 
 // Text returns the ssid as primary, the status as secondary
 func (b *Block) Text() (primary, secondary string) {
-	if b.currentStatus == connectedStatus {
-		return b.currentSSID, fmt.Sprintf("%d dBm", b.dBm)
-	} else {
-		return b.currentSSID, string(b.currentStatus)
-	}
+	return b.currentSSID, string(b.currentStatus)
 }
 
 // Colorer returns the default colorer
