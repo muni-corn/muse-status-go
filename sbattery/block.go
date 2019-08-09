@@ -4,6 +4,8 @@ import (
 	"github.com/muni-corn/muse-status/format"
 	"github.com/muni-corn/muse-status/utils"
 	"time"
+	"math"
+	"fmt"
 	"strconv"
 )
 
@@ -103,16 +105,28 @@ const timeFormat = "3:04 pm"
 func (b *Block) Text() (primary, secondary string) {
 	primary = strconv.Itoa(b.getBatteryPercentage()) + "%"
 
-	var prefix string
-	switch b.currentRead.status {
-	case Charging:
-		prefix = "Full at"
-	case Discharging:
-		prefix = "Until"
-	default:
+	completionTime := b.getCompletionTime()
+	if completionTime.Before(time.Now()) {
+		secondary = ""
 		return
 	}
-	secondary = prefix + " " + b.getCompletionTime().Format(timeFormat)
+
+	durationLeft := completionTime.Sub(time.Now())
+	if durationLeft <= time.Minute * 30 {
+		secondary = fmt.Sprintf("%d min left", int(math.Ceil(float64(durationLeft / time.Minute))))
+	} else {
+		var prefix string
+		switch b.currentRead.status {
+		case Charging:
+			prefix = "Full at"
+		case Discharging:
+			prefix = "Until"
+		default:
+			return
+		}
+
+		secondary = prefix + " " + completionTime.Format(timeFormat)
+	}
 	return
 }
 
