@@ -91,6 +91,7 @@ func (b *Block) Update() {
 	// strength
 	infos, err := b.client.StationInfo(b.iface)
 	if err != nil {
+		b.currentStatus = disconnectedStatus
 		return
 	}
 
