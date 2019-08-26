@@ -5,6 +5,7 @@ import (
 	"github.com/muni-corn/muse-status/utils"
 	"time"
 	"math"
+
 	"fmt"
 	"strconv"
 )
@@ -15,6 +16,8 @@ type read struct {
 	charge int
 }
 
+const maxReads = 50 // used for moving averages
+
 // Block is a data block for sbattery
 type Block struct {
 	warningLevel int
@@ -23,8 +26,10 @@ type Block struct {
 	battery string
 	chargeFull int
 
-	lastAnchorRead read // last time the status of the battery changed, used for calculating time remaining
+	readsSinceLastAnchor int
+	averageRate float32
 	currentRead read
+	lastRead read
 
 	nextUpdateTime time.Time
 }
@@ -34,7 +39,7 @@ func NewSmartBatteryBlock(battery string, warningLevel, alarmLevel int) (*Block,
 	b := &Block{battery: battery, warningLevel: warningLevel, alarmLevel: alarmLevel}
 
 	var err error
-	b.chargeFull, err = utils.GetIntFromFile(b.getBaseDir()+"charge_full")
+	b.chargeFull, err = b.getBatteryChargeMax()
 	if err != nil {
 		return nil, err
 	}
@@ -78,14 +83,32 @@ func (b *Block) broadcast(c chan<- bool) {
 func (b *Block) Update() {
 	b.nextUpdateTime = time.Now().Add(time.Second * 5)
 
+	// update the max charge, in case it changes, which I'm pretty sure it does tbh
+	// (only update if no error)
+	newChargeFull, err := b.getBatteryChargeMax()
+	if err == nil {
+		b.chargeFull = newChargeFull
+	}
+
 	newRead, err := b.getNewRead()
 	if err != nil {
 		return
 	}
 
 	b.currentRead = newRead
-	if b.currentRead.status != b.lastAnchorRead.status {
-		b.lastAnchorRead = b.currentRead
+	if b.currentRead != b.lastRead {
+		if b.currentRead.status != b.lastRead.status {
+			b.readsSinceLastAnchor = 0
+			b.averageRate = 0
+		} else if !b.lastRead.at.IsZero() {
+			rateNow := float32(b.currentRead.at.Sub(b.lastRead.at)) / float32(b.currentRead.charge-b.lastRead.charge)
+			b.averageRate = getNewAverageRate(b.averageRate, b.readsSinceLastAnchor, rateNow)
+
+			if b.readsSinceLastAnchor < maxReads {
+				b.readsSinceLastAnchor++
+			}
+		}
+		b.lastRead = b.currentRead
 	}
 }
 
@@ -127,6 +150,7 @@ func (b *Block) Text() (primary, secondary string) {
 
 		secondary = prefix + " " + completionTime.Format(timeFormat)
 	}
+
 	return
 }
 
@@ -185,6 +209,11 @@ func (b *Block) getBatteryCharge() (int, error) {
 	return utils.GetIntFromFile(b.getBaseDir()+"charge_now")
 }
 
+func (b *Block) getBatteryChargeMax() (int, error) {
+	return utils.GetIntFromFile(b.getBaseDir()+"charge_full")
+}
+
+
 func (b *Block) getBatteryPercentage() int {
 	return b.currentRead.charge * 100 / b.chargeFull
 }
@@ -211,8 +240,12 @@ func (b *Block) getCompletionTime() time.Time {
 		end = b.chargeFull
 	}
 
-	// duration (nanosecond?) per charge unit
-	rate := float64(b.currentRead.at.Sub(b.lastAnchorRead.at)) / float64(b.currentRead.charge - b.lastAnchorRead.charge)
-	timeLeft := float64(end-b.currentRead.charge) * rate
+	// charge units left * duration per charge unit
+	timeLeft := float32(end-b.currentRead.charge) * b.averageRate
 	return time.Now().Add(time.Duration(timeLeft))
+}
+
+func getNewAverageRate(avgRateNow float32, reads int, newReadRate float32) float32 {
+	// return avgRateNow*float32(reads)/float32(reads+1) + newReadRate/float32(reads+1)
+	return newReadRate
 }
