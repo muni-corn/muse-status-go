@@ -16,7 +16,7 @@ type read struct {
 	charge int
 }
 
-const maxReads = 50 // used for moving averages
+const maxReads = 300 // used for moving averages
 
 // Block is a data block for sbattery
 type Block struct {
@@ -100,15 +100,18 @@ func (b *Block) Update() {
 		if b.currentRead.status != b.lastRead.status {
 			b.readsSinceLastAnchor = 0
 			b.averageRate = 0
-		} else if !b.lastRead.at.IsZero() {
+			b.lastRead = b.currentRead
+		} else if !b.lastRead.at.IsZero() && b.currentRead.at.Sub(b.lastRead.at) >= time.Second*5 {
 			rateNow := float32(b.currentRead.at.Sub(b.lastRead.at)) / float32(b.currentRead.charge-b.lastRead.charge)
 			b.averageRate = getNewAverageRate(b.averageRate, b.readsSinceLastAnchor, rateNow)
 
 			if b.readsSinceLastAnchor < maxReads {
 				b.readsSinceLastAnchor++
 			}
+			b.lastRead = b.currentRead
+		} else if b.lastRead.at.IsZero() {
+			b.lastRead = b.currentRead
 		}
-		b.lastRead = b.currentRead
 	}
 }
 
@@ -246,6 +249,5 @@ func (b *Block) getCompletionTime() time.Time {
 }
 
 func getNewAverageRate(avgRateNow float32, reads int, newReadRate float32) float32 {
-	// return avgRateNow*float32(reads)/float32(reads+1) + newReadRate/float32(reads+1)
-	return newReadRate
+	return avgRateNow*float32(reads)/float32(reads+1) + newReadRate/float32(reads+1)
 }
