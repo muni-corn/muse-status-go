@@ -28,12 +28,19 @@ type Block struct {
 	text  string
 	icon  rune
 	fader *format.FadingColorer
+
+    rapidfire bool
 }
 
 // NewBrightnessBlock returns a new brightness.Block
-func NewBrightnessBlock(card string) (*Block, error) {
+func NewBrightnessBlock(card string, rapidfire bool) (*Block, error) {
+	if rapidfire {
+		println("WARNING! A brightness block has been created with rapidfire enabled. This can be VERY bad for your system's performance. Try using `muse-status notify volume` instead after volume updates.")
+	}
+
 	b := &Block{
 		card: card,
+        rapidfire: rapidfire,
 	}
 
 	var err error
@@ -53,21 +60,22 @@ func NewBrightnessBlock(card string) (*Block, error) {
 
 func (b *Block) StartBroadcast() <-chan bool {
 	c := make(chan bool)
-	go b.broadcast(c)
+    if b.rapidfire {
+        go b.broadcast(c)
+    }
 	return c
 }
 
 func (b *Block) broadcast(c chan<- bool) {
-	b.Update()
 	for {
 		if b.fader.IsFading() {
 			c <- true
 		} 
-		if b.needsUpdate() {
-			println("brightness change")
-			b.Update()
+        b.Update()
+		if b.currentBrightness != b.lastBrightness {
 			b.fader.Trigger()
 			c <- true
+            b.lastBrightness = b.currentBrightness
 		}
 		
 		time.Sleep(time.Second / 10)
@@ -79,25 +87,16 @@ func (b *Block) Name() string {
 	return "brightness"
 }
 
-// needsUpdate returns true if the Block needs its text
-// updated
-func (b *Block) needsUpdate() bool {
-	var err error
-	b.currentBrightness, err = b.getCurrentBrightness()
-
-	if err == nil && b.currentBrightness != b.lastBrightness {
-		b.lastBrightness = b.currentBrightness
-		return true
-	}
-
-	return false
-}
-
 // Update updates the text and icon of the block
 func (b *Block) Update() {
+    var err error
+    b.currentBrightness, err = b.getCurrentBrightness()
+    if err != nil {
+        return
+    }
+
 	b.text = fmt.Sprintf("%d%%", b.currentBrightness*100/b.maxBrightness)
 	b.icon = getIcon(b.currentBrightness*100/b.maxBrightness)
-	b.fader.Trigger()
 }
 
 // Icon returns the brightness icon
