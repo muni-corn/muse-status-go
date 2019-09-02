@@ -13,16 +13,16 @@ import (
 )
 
 type Daemon struct {
-	unixAddr string
+	addr string
 	leftBlocks []format.DataBlock
 	centerBlocks []format.DataBlock
 	rightBlocks []format.DataBlock
 	connections []net.Conn
 }
 
-func New(socketAddr string, leftBlocks, centerBlocks, rightBlocks []format.DataBlock) *Daemon {
+func New(addr string, leftBlocks, centerBlocks, rightBlocks []format.DataBlock) *Daemon {
 	d := &Daemon{
-		unixAddr: socketAddr, 
+		addr: addr, 
 		leftBlocks: leftBlocks, 
 		centerBlocks: centerBlocks, 
 		rightBlocks: rightBlocks,
@@ -38,20 +38,10 @@ func New(socketAddr string, leftBlocks, centerBlocks, rightBlocks []format.DataB
 func (d *Daemon) Start() error {
 	println("starting daemon")
 
-	s, err := net.Listen("unix", d.unixAddr)
+	s, err := net.Listen("tcp", d.addr)
 	if err != nil {
 		return err
 	}
-
-	// catch interrupt signals to cleanup nicely
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL)
-	go func() {
-		<- sigs
-		println("removing", d.unixAddr)
-		os.Remove(d.unixAddr)
-		os.Exit(0)
-	}()
 
 	var currentStatus string
 

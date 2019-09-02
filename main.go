@@ -20,7 +20,7 @@ import (
 	"strings"
 )
 
-const socketAddr = "/tmp/muse-status.sock"
+const addr = ":1612"
 
 func main() {
 	handleArgs()
@@ -37,7 +37,7 @@ func main() {
 
 	// TODO parse from configuration file
 	d := daemon.New(
-		socketAddr, 
+		addr, 
 		[]format.DataBlock{bspwmBlock, windowBlock},
 		[]format.DataBlock{dateBlock, weatherBlock, playerctlBlock},
 		[]format.DataBlock{brightnessBlock, volumeBlock, networkBlock, batteryBlock},
@@ -48,14 +48,14 @@ func main() {
 		err error
 	)
 
-	if client, err = net.Dial("unix", socketAddr); err != nil {
-		println("error connecting to socket; starting own daemon")
+	if client, err = net.Dial("tcp", addr); err != nil {
+		println("error connecting to daemon; starting own")
 		err = d.Start()
 		if err != nil {
 			panic(err)
 		}
 
-		client, err = net.Dial("unix", socketAddr)
+		client, err = net.Dial("tcp", addr)
 		if err != nil {
 			panic(err)
 		}
@@ -113,7 +113,7 @@ func handleArgs() {
 func sendCommand(args []string) error {
 	str := strings.Join(args, " ")
 
-	conn, err := net.Dial("unix", socketAddr)
+	conn, err := net.Dial("tcp", addr)
 	if err != nil {
 		return err
 	}
