@@ -1,23 +1,94 @@
 package main
 
 import (
-	"fmt"
 	"github.com/muni-corn/muse-status/bspwm"
 	"github.com/muni-corn/muse-status/brightness"
 	"github.com/muni-corn/muse-status/date"
 	"github.com/muni-corn/muse-status/format"
-	// "github.com/muni-corn/muse-status/mpd"
 	"github.com/muni-corn/muse-status/network"
 	"github.com/muni-corn/muse-status/playerctl"
 	"github.com/muni-corn/muse-status/sbattery"
 	"github.com/muni-corn/muse-status/volume"
 	"github.com/muni-corn/muse-status/weather"
 	"github.com/muni-corn/muse-status/window"
+	"github.com/muni-corn/muse-status/daemon"
+
+	"bufio"
+	"fmt"
+	"net"
 	"os"
-	// "time"
+	"strings"
 )
 
+const socketAddr = "/tmp/muse-status.sock"
+
 func main() {
+	handleArgs()
+
+	bspwmBlock := bspwm.NewBSPWMBlock(false)
+	batteryBlock, _ := sbattery.NewSmartBatteryBlock("BAT0", 30, 15)
+	brightnessBlock, _ := brightness.NewBrightnessBlock("amdgpu_bl0", false)
+	dateBlock := date.NewDateBlock()
+	networkBlock, _ := network.NewNetworkBlock("wlo1")
+	playerctlBlock := playerctl.NewPlayerctlBlock(false)
+	volumeBlock := volume.NewVolumeBlock(false)
+	windowBlock := window.NewWindowBlock(false)
+	weatherBlock := weather.NewWeatherBlock(nil)
+
+	// TODO parse from configuration file
+	d := daemon.New(
+		socketAddr, 
+		[]format.DataBlock{bspwmBlock, windowBlock},
+		[]format.DataBlock{dateBlock, weatherBlock, playerctlBlock},
+		[]format.DataBlock{brightnessBlock, volumeBlock, networkBlock, batteryBlock},
+	)
+
+	var (
+		client net.Conn
+		err error
+	)
+
+	if client, err = net.Dial("unix", socketAddr); err != nil {
+		println("error connecting to socket; starting own daemon")
+		err = d.Start()
+		if err != nil {
+			panic(err)
+		}
+
+		client, err = net.Dial("unix", socketAddr)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	handleClient(client)
+}
+
+func handleClient(conn net.Conn) error {
+	r := bufio.NewReader(conn)
+
+	for {
+		str, err := r.ReadString('\n')
+		if err != nil {
+			panic(err)
+		}
+		fmt.Print(str)
+	}
+}
+
+func handleArgs() {
+	// muse be a command if first (second, technically) argument doesn't start
+	// with a dash. exit after command
+	if len(os.Args) >= 2 && os.Args[1][0] != '-' {
+		err := sendCommand(os.Args[1:])
+		if err != nil {
+			fmt.Printf("error: %s", err.Error())
+			os.Exit(1)
+		}
+
+		os.Exit(0)
+	}
+
 	for k, v := range os.Args {
 		if k+1 >= len(os.Args) {
 			break
@@ -25,71 +96,34 @@ func main() {
 		next := os.Args[k+1]
 
 		switch v {
-		case "-lemonbar":
-			format.SetFormatMode(format.LemonbarMode);
-		case "-S":
-			format.SetSecondaryColor(next)
-		case "-P":
+		case "-p", "--primary-color":
 			format.SetPrimaryColor(next)
-		case "-F":
+		case "-s", "--secondary-color":
+			format.SetSecondaryColor(next)
+		case "-f", "--font":
 			format.SetTextFont(next)
-		case "-I":
+		case "-i", "--icon-font":
 			format.SetIconFont(next)
+			// case "-r", "--rapid-fire":
+			// remove completely? ignore notify actions and "rapid fire" check instead
 		}
-	}
-
-	switch (format.GetFormatMode()) {
-	case format.LemonbarMode:
-		lemonbarStatus()
-	default:
-		lemonbarStatus()
 	}
 }
 
-func lemonbarStatus() {
-	bspwmBlock := bspwm.NewBSPWMBlock()
-	batteryBlock, _ := sbattery.NewSmartBatteryBlock("BAT0", 30, 15)
-	brightnessBlock, _ := brightness.NewBrightnessBlock("amdgpu_bl0")
-	dateBlock := date.NewDateBlock()
-	networkBlock, _ := network.NewNetworkBlock("wlo1")
-	playerctlBlock := playerctl.NewPlayerctlBlock()
-	volumeBlock := volume.NewVolumeBlock()
-	windowBlock := window.NewWindowBlock()
-	weatherBlock := weather.NewWeatherBlock(nil)
+func sendCommand(args []string) error {
+	str := strings.Join(args, " ")
 
-	dateChan := dateBlock.StartBroadcast()
-	playerctlChan := playerctlBlock.StartBroadcast()
-	brightnessChan := brightnessBlock.StartBroadcast()
-	batteryChan := batteryBlock.StartBroadcast()
-	networkChan := networkBlock.StartBroadcast()
-	volumeChan := volumeBlock.StartBroadcast()
-	windowChan := windowBlock.StartBroadcast()
-	bspwmChan := bspwmBlock.StartBroadcast()
-	weatherChan := weatherBlock.StartBroadcast()
-
-	leftModules := []format.DataBlock{bspwmBlock, windowBlock};
-	middleModules := []format.DataBlock{dateBlock, weatherBlock, playerctlBlock};
-	rightModules := []format.DataBlock{brightnessBlock, volumeBlock, networkBlock, batteryBlock};
-
-	for {
-		// hold until an update
-		select {
-		case <-dateChan:
-		case <-brightnessChan:
-		case <-batteryChan:
-		case <-networkChan:
-		case <-volumeChan:
-		case <-windowChan:
-		case <-bspwmChan:
-		case <-playerctlChan:
-		case <-weatherChan:
-		}
-
-		l := format.Chain(leftModules...)
-		c := format.Chain(middleModules...)
-		r := format.Chain(rightModules...)
-		fmt.Printf("%%{l}%s%%{c}%s%%{r}%s\n", l, c, r)
+	conn, err := net.Dial("unix", socketAddr)
+	if err != nil {
+		return err
 	}
+
+	_, err = conn.Write([]byte(str + "\n"))
+	if err != nil {
+		panic(err)
+	}
+
+	return nil
 }
 
 // vim: foldmethod=marker

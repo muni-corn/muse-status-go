@@ -10,12 +10,19 @@ import (
 type Block struct {
 	lastVolume    int
 	currentVolume int
+	rapidfire bool
 
 	fader *format.FadingColorer
 }
 
-func NewVolumeBlock() *Block {
-	b := new(Block)
+func NewVolumeBlock(rapidfire bool) *Block {
+	if rapidfire {
+		println("WARNING! A volume block has been created with rapidfire enabled. This can be VERY bad for your system's performance. Try using `muse-status notify volume` instead after volume updates.")
+	}
+
+	b := &Block{
+		rapidfire: rapidfire,
+	}
 	b.fader = &format.FadingColorer {
 		Duration: 3,
 		StartColor: format.PrimaryColor(),
@@ -26,7 +33,9 @@ func NewVolumeBlock() *Block {
 
 func (b *Block) StartBroadcast() <-chan bool {
 	c := make(chan bool)
-	go b.broadcast(c)
+	if b.rapidfire {
+		go b.broadcast(c)
+	}
 	return c
 }
 
@@ -35,7 +44,7 @@ func (b *Block) broadcast(c chan<- bool) {
 	b.Update()
 	c <- true
 
-	for {
+	for b.rapidfire {
 		b.Update() 
 
 		if b.fader.IsFading() {

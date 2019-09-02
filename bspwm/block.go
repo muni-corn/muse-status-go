@@ -13,15 +13,25 @@ type Block struct {
 	lemonOutput string
 
 	currentWorkspaces []workspace
+
+    rapidfire bool
 }
 
-func NewBSPWMBlock() *Block {
-	return &Block{}
+func NewBSPWMBlock(rapidfire bool) *Block {
+	if rapidfire {
+		println("WARNING! A bspwm block has been created with rapidfire enabled. This can be VERY bad for your system's performance. Try using `muse-status notify volume` instead after volume updates.")
+	}
+
+	return &Block{
+        rapidfire: rapidfire,
+    }
 }
 
 func (b *Block) StartBroadcast() <-chan bool { // returns a channel that sends signals to update the status bar
 	c := make(chan bool)
-	go b.broadcast(c)
+    if b.rapidfire {
+        go b.broadcast(c)
+    }
 	return c
 }
 

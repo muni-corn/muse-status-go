@@ -9,15 +9,24 @@ import (
 type Block struct {
 	currentWindow string
 	lastWindow string
+    rapidfire bool
 }
 
-func NewWindowBlock() *Block {
-	return new(Block)
+func NewWindowBlock(rapidfire bool) *Block {
+	if rapidfire {
+		println("WARNING! A window block has been created with rapidfire enabled. This can be VERY bad for your system's performance. Try using `muse-status notify volume` instead after volume updates.")
+	}
+
+	return &Block{
+		rapidfire: rapidfire,
+	}
 }
 
 func (b *Block) StartBroadcast() <-chan bool {
 	c := make(chan bool)
-	go b.broadcast(c)
+    if b.rapidfire {
+        go b.broadcast(c)
+    }
 	return c
 }
 
