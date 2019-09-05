@@ -98,17 +98,23 @@ func (b *Block) Update() {
 	b.currentRead = newRead
 	if b.currentRead != b.lastRead {
 		if b.currentRead.status != b.lastRead.status {
+			// if status change, reset all stats
 			b.readsSinceLastAnchor = 0
 			b.averageRate = 0
 			b.lastRead = b.currentRead
 		} else if !b.lastRead.at.IsZero() && b.currentRead.at.Sub(b.lastRead.at) >= time.Second*5 {
+			// calculate new rate
 			rateNow := float32(b.currentRead.at.Sub(b.lastRead.at)) / float32(b.currentRead.charge-b.lastRead.charge)
-			b.averageRate = getNewAverageRate(b.averageRate, b.readsSinceLastAnchor, rateNow)
 
-			if b.readsSinceLastAnchor < maxReads {
-				b.readsSinceLastAnchor++
+			// only proceed with average rate adjustment if the direction of charge matches that of the status
+			if (b.currentRead.status == Charging && rateNow > 0) || (b.currentRead.status == Discharging && rateNow < 0) {
+				b.averageRate = getNewAverageRate(b.averageRate, b.readsSinceLastAnchor, rateNow)
+
+				if b.readsSinceLastAnchor < maxReads {
+					b.readsSinceLastAnchor++
+				}
+				b.lastRead = b.currentRead
 			}
-			b.lastRead = b.currentRead
 		} else if b.lastRead.at.IsZero() {
 			b.lastRead = b.currentRead
 		}
