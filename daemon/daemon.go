@@ -5,9 +5,7 @@ import (
 	"fmt"
 	"net"
 	"strings"
-	"os"
-	"os/signal"
-	"syscall"
+	"os/exec"
 
 	"github.com/muni-corn/muse-status/format"
 )
@@ -67,12 +65,12 @@ func (d *Daemon) Start() error {
 		}
 	}()
 
+	go d.listenForXorgChanges()
+
 	return nil
 }
 
 func (d *Daemon) HandleCommand(cmd string) error {
-	println("handling command:", cmd)
-
 	split := strings.SplitN(cmd, " ", 2)
 	
 	switch split[0] {
@@ -81,7 +79,6 @@ func (d *Daemon) HandleCommand(cmd string) error {
 			break;
 		}
 		notifyName := split[1][:len(split[1])-1] // trims new line
-		println("notifying \"" + notifyName + "\"")
 		d.notify(notifyName)
 	default:
 		return fmt.Errorf("unhandled command: %s", split[0])
@@ -168,13 +165,35 @@ func (d *Daemon) echoNewStatus() error {
 
 func (d *Daemon) notify(what string) {
 	for _, b := range d.allBlocks() {
-		print("notify ", b.Name(), "? ")
 		if b.Name() == what {
-			println("yes")
 			b.Update()
 			d.echoNewStatus()
-		} else {
-			println("no")
 		}
 	}
+}
+
+func (d *Daemon) listenForXorgChanges() {
+    cmd := exec.Command("bspc", "subscribe", "report")
+    r, err := cmd.StdoutPipe()
+    if err != nil {
+        return
+    }
+
+    err = cmd.Start()
+    if err != nil {
+        println(err)
+        return
+    }
+
+    defer r.Close()
+    bufr := bufio.NewReader(r)
+    for {
+        _, _, err := bufr.ReadLine()
+        if err != nil {
+            println(err)
+        }
+
+		d.notify("bspwm")
+		d.notify("window")
+    }
 }

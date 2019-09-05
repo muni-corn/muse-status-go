@@ -25,12 +25,12 @@ const addr = ":1612"
 func main() {
 	handleArgs()
 
-	bspwmBlock := bspwm.NewBSPWMBlock(false)
+	bspwmBlock := bspwm.NewBSPWMBlock()
 	batteryBlock, _ := sbattery.NewSmartBatteryBlock("BAT0", 30, 15)
 	brightnessBlock, _ := brightness.NewBrightnessBlock("amdgpu_bl0", false)
 	dateBlock := date.NewDateBlock()
 	networkBlock, _ := network.NewNetworkBlock("wlo1")
-	playerctlBlock := playerctl.NewPlayerctlBlock(false)
+	playerctlBlock := playerctl.NewPlayerctlBlock()
 	volumeBlock := volume.NewVolumeBlock(false)
 	windowBlock := window.NewWindowBlock(false)
 	weatherBlock := weather.NewWeatherBlock(nil)
