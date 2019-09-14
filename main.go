@@ -26,27 +26,60 @@ func main() {
 	handleArgs()
 
 	bspwmBlock := bspwm.NewBSPWMBlock()
-	batteryBlock, _ := sbattery.NewSmartBatteryBlock("BAT0", 30, 15)
-	brightnessBlock, _ := brightness.NewBrightnessBlock("amdgpu_bl0", false)
+	batteryBlock, err := sbattery.NewSmartBatteryBlock("BAT0", 30, 15)
+	if err != nil {
+		println(err)
+	}
+
+	brightnessBlock, err := brightness.NewBrightnessBlock("amdgpu_bl0", false)
+	if err != nil {
+		println(err)
+	}
+
 	dateBlock := date.NewDateBlock()
-	networkBlock, _ := network.NewNetworkBlock("wlo1")
+	networkBlock, err := network.NewNetworkBlock("wlo1")
+	if err != nil {
+		println(err)
+	}
+
 	playerctlBlock := playerctl.NewPlayerctlBlock()
 	volumeBlock := volume.NewVolumeBlock(false)
 	windowBlock := window.NewWindowBlock(false)
 	weatherBlock := weather.NewWeatherBlock(nil)
 
+	var (
+		leftBlocks []format.DataBlock
+		centerBlocks []format.DataBlock
+		rightBlocks []format.DataBlock
+	)
+
+	for _, b := range []format.DataBlock{bspwmBlock, windowBlock} {
+		if b != nil {
+			leftBlocks = append(leftBlocks, b)
+		}
+	}
+
+	for _, b := range []format.DataBlock{dateBlock, weatherBlock, playerctlBlock} {
+		if b != nil {
+			centerBlocks = append(centerBlocks, b)
+		}
+	}
+
+	for _, b := range []format.DataBlock{brightnessBlock, volumeBlock, networkBlock, batteryBlock} {
+		if b != nil {
+			rightBlocks = append(rightBlocks, b)
+		}
+	}
+
 	// TODO parse from configuration file
 	d := daemon.New(
 		addr, 
-		[]format.DataBlock{bspwmBlock, windowBlock},
-		[]format.DataBlock{dateBlock, weatherBlock, playerctlBlock},
-		[]format.DataBlock{brightnessBlock, volumeBlock, networkBlock, batteryBlock},
+		leftBlocks,
+		centerBlocks,
+		rightBlocks,
 	)
 
-	var (
-		client net.Conn
-		err error
-	)
+	var client net.Conn
 
 	if client, err = net.Dial("tcp", addr); err != nil {
 		println("error connecting to daemon; starting own")
