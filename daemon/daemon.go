@@ -27,7 +27,7 @@ func New(addr string, leftBlocks, centerBlocks, rightBlocks []format.DataBlock) 
 	}
 
 	for _, b := range d.allBlocks() {
-		b.Update()
+		go b.Update()
 	}
 
 	return d
