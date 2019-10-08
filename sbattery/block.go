@@ -3,33 +3,35 @@ package sbattery
 import (
 	"github.com/muni-corn/muse-status/format"
 	"github.com/muni-corn/muse-status/utils"
-	"time"
 	"math"
+	"time"
 
 	"fmt"
 	"strconv"
 )
 
 type read struct {
-	at time.Time
+	at     time.Time
 	status ChargeStatus
 	charge int
 }
 
-const maxReads = 300 // used for moving averages
+const maxReads = 40 // used for moving averages
 
 // Block is a data block for sbattery
 type Block struct {
 	warningLevel int
-	alarmLevel int
+	alarmLevel   int
 
-	battery string
+	battery    string
 	chargeFull int
 
-	readsSinceLastAnchor int
-	averageRate float32
-	currentRead read
-	lastRead read
+	chargingReadsSinceLastAnchor    int
+	averageChargingRate             float32
+	dischargingReadsSinceLastAnchor int
+	averageDischargingRate          float32
+	currentRead                     read
+	lastRead                        read
 
 	nextUpdateTime time.Time
 }
@@ -66,7 +68,7 @@ func (b *Block) broadcast(c chan<- bool) {
 			b.Update()
 
 			newPercentage := b.currentRead.charge / b.chargeFull
-			if (b.currentRead.status != oldStatus || newPercentage != oldPercentage) {
+			if b.currentRead.status != oldStatus || newPercentage != oldPercentage {
 				c <- true
 			}
 		}
@@ -97,26 +99,41 @@ func (b *Block) Update() {
 
 	b.currentRead = newRead
 	if b.currentRead != b.lastRead {
-		if b.currentRead.status != b.lastRead.status {
-			// if status change, reset all stats
-			b.readsSinceLastAnchor = 0
-			b.averageRate = 0
+		if b.currentRead.status != b.lastRead.status || b.lastRead.at.IsZero() {
 			b.lastRead = b.currentRead
-		} else if !b.lastRead.at.IsZero() && b.currentRead.at.Sub(b.lastRead.at) >= time.Second*5 {
-			// calculate new rate
+		} else if b.currentRead.at.Sub(b.lastRead.at) >= time.Second*5 && b.currentRead.charge-b.lastRead.charge != 0 && (b.currentRead.status == Charging || b.currentRead.status == Discharging) {
+
+			// calculate new rate in nanoseconds per charge unit
 			rateNow := float32(b.currentRead.at.Sub(b.lastRead.at)) / float32(b.currentRead.charge-b.lastRead.charge)
 
-			// only proceed with average rate adjustment if the direction of charge matches that of the status
-			if (b.currentRead.status == Charging && rateNow > 0) || (b.currentRead.status == Discharging && rateNow < 0) {
-				b.averageRate = getNewAverageRate(b.averageRate, b.readsSinceLastAnchor, rateNow)
-
-				if b.readsSinceLastAnchor < maxReads {
-					b.readsSinceLastAnchor++
-				}
-				b.lastRead = b.currentRead
+			if math.IsInf(float64(rateNow), 0) {
+				return
 			}
-		} else if b.lastRead.at.IsZero() {
+
+			b.calculateNewRate(rateNow)
+
 			b.lastRead = b.currentRead
+		}
+	}
+}
+
+func (b *Block) calculateNewRate(rateNow float32) {
+	switch b.currentRead.status {
+	case Discharging:
+		if rateNow < 0 {
+			b.averageDischargingRate = getNewAverageRate(b.averageDischargingRate, b.dischargingReadsSinceLastAnchor, rateNow)
+
+			if b.dischargingReadsSinceLastAnchor < maxReads {
+				b.dischargingReadsSinceLastAnchor++
+			}
+		}
+	case Charging:
+		if rateNow > 0 {
+			b.averageChargingRate = getNewAverageRate(b.averageChargingRate, b.chargingReadsSinceLastAnchor, rateNow)
+
+			if b.chargingReadsSinceLastAnchor < maxReads {
+				b.chargingReadsSinceLastAnchor++
+			}
 		}
 	}
 }
@@ -144,8 +161,8 @@ func (b *Block) Text() (primary, secondary string) {
 	}
 
 	durationLeft := completionTime.Sub(time.Now())
-	if durationLeft <= time.Minute * 30 {
-		secondary = fmt.Sprintf("%d min left", int(math.Ceil(float64(durationLeft / time.Minute))))
+	if durationLeft <= time.Minute*30 {
+		secondary = fmt.Sprintf("%d min left", int(math.Ceil(float64(durationLeft/time.Minute))))
 	} else {
 		var prefix string
 		switch b.currentRead.status {
@@ -187,7 +204,7 @@ func (b *Block) Hidden() bool {
 
 // ForceShort never happens; return false
 func (b *Block) ForceShort() bool {
-	return false;
+	return false
 }
 
 func (b *Block) Output(mode format.Mode) string {
@@ -215,20 +232,19 @@ func (b *Block) getNewRead() (read, error) {
 }
 
 func (b *Block) getBatteryCharge() (int, error) {
-	return utils.GetIntFromFile(b.getBaseDir()+"charge_now")
+	return utils.GetIntFromFile(b.getBaseDir() + "charge_now")
 }
 
 func (b *Block) getBatteryChargeMax() (int, error) {
-	return utils.GetIntFromFile(b.getBaseDir()+"charge_full")
+	return utils.GetIntFromFile(b.getBaseDir() + "charge_full")
 }
-
 
 func (b *Block) getBatteryPercentage() int {
 	return b.currentRead.charge * 100 / b.chargeFull
 }
 
 func (b *Block) getBatteryStatus() (ChargeStatus, error) {
-	str, err := utils.GetStringFromFile(b.getBaseDir()+"status")
+	str, err := utils.GetStringFromFile(b.getBaseDir() + "status")
 	if err != nil {
 		return Unknown, err
 	}
@@ -250,7 +266,14 @@ func (b *Block) getCompletionTime() time.Time {
 	}
 
 	// charge units left * duration per charge unit
-	timeLeft := float32(end-b.currentRead.charge) * b.averageRate
+	var rate float32
+	switch b.currentRead.status {
+	case Charging:
+		rate = b.averageChargingRate
+	case Discharging:
+		rate = b.averageDischargingRate
+	}
+	timeLeft := float32(end-b.currentRead.charge) * rate // charge units remaining * nanoseconds / charge unit
 	return time.Now().Add(time.Duration(timeLeft))
 }
 
