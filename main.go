@@ -1,17 +1,18 @@
 package main
 
 import (
-	"github.com/muni-corn/muse-status/bspwm"
 	"github.com/muni-corn/muse-status/brightness"
+	"github.com/muni-corn/muse-status/bspwm"
+	"github.com/muni-corn/muse-status/daemon"
 	"github.com/muni-corn/muse-status/date"
 	"github.com/muni-corn/muse-status/format"
 	"github.com/muni-corn/muse-status/network"
 	"github.com/muni-corn/muse-status/playerctl"
 	"github.com/muni-corn/muse-status/sbattery"
+	"github.com/muni-corn/muse-status/touchmenu"
 	"github.com/muni-corn/muse-status/volume"
 	"github.com/muni-corn/muse-status/weather"
 	"github.com/muni-corn/muse-status/window"
-	"github.com/muni-corn/muse-status/daemon"
 
 	"bufio"
 	"fmt"
@@ -25,6 +26,7 @@ const addr = ":1612"
 func main() {
 	handleArgs()
 
+	touchmenuBlock := &touchmenu.Block{}
 	bspwmBlock := bspwm.NewBSPWMBlock()
 	batteryBlock, err := sbattery.NewSmartBatteryBlock("BAT0", 30, 15)
 	if err != nil {
@@ -48,12 +50,12 @@ func main() {
 	weatherBlock := weather.NewWeatherBlock(nil)
 
 	var (
-		leftBlocks []format.DataBlock
+		leftBlocks   []format.DataBlock
 		centerBlocks []format.DataBlock
-		rightBlocks []format.DataBlock
+		rightBlocks  []format.DataBlock
 	)
 
-	for _, b := range []format.DataBlock{bspwmBlock, windowBlock} {
+	for _, b := range []format.DataBlock{touchmenuBlock, bspwmBlock, windowBlock} {
 		if b != nil {
 			leftBlocks = append(leftBlocks, b)
 		}
@@ -73,7 +75,7 @@ func main() {
 
 	// TODO parse from configuration file
 	d := daemon.New(
-		addr, 
+		addr,
 		leftBlocks,
 		centerBlocks,
 		rightBlocks,
