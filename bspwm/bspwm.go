@@ -85,6 +85,7 @@ func lemonFormatWorkspaces(ws []workspace) string {
 		}
 		colorStr := color.AlphaHex + color.RGBHex
 		formatted += fmt.Sprintf("%%{F#%s}%s%%{F-}    ", colorStr, w.name)
+        formatted = fmt.Sprintf("%%{A:bspc desktop -f '^%s':}%s%%{A}", w.name, formatted)
 	}
 
 	return strings.TrimSpace(formatted)

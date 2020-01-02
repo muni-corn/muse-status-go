@@ -25,5 +25,5 @@ func (b *Block) ForceShort() bool {
 }
 
 func (b *Block) Output(mode format.Mode) string {
-    return "%{A:echo \"hello\" | rofi -dmenu:}\uf70b%{A}"
+    return "%{A:onboard:}\uf70b%{A}"
 }
