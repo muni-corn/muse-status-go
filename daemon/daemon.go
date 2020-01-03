@@ -101,17 +101,15 @@ func (d *Daemon) handleConnection(conn net.Conn, init string) {
     r := bufio.NewReader(conn)
 
     go func() {
-        for {
-            str, err := r.ReadString('\n')
-            if err != nil {
-                return
-            }
+        str, err := r.ReadString('\n')
+        if err != nil {
+            return
+        }
 
-            // try to handle a command, or else print what must be the status
-            err = d.HandleCommand(str)
-            if err != nil {
-                conn.Write([]byte(err.Error() + "\n"))
-            }
+        // try to handle a command
+        err = d.HandleCommand(str)
+        if err != nil {
+            conn.Write([]byte(err.Error() + "\n"))
         }
     }()
 }
