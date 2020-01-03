@@ -1,16 +1,16 @@
 package playerctl
 
 import (
-	"os/exec"
 	"bytes"
+	"os/exec"
 )
 
 type status string
 
 const (
-	playing 	status = "Playing"
-	paused 			   = "Paused"
-	stopped 		   = "Stopped"
+	playing status = "Playing"
+	paused         = "Paused"
+	stopped        = "Stopped"
 )
 
 func getSongTitle() (string, error) {

@@ -4,8 +4,8 @@ import (
 	"github.com/muni-corn/muse-status/date"
 
 	"os/exec"
-	"strings"
 	"regexp"
+	"strings"
 )
 
 var (
@@ -59,12 +59,12 @@ func xWindow() string {
 		return date.GetGreeting()
 	}
 
- 	window := string(cmdOutput)
- 	if window == "i3" || strings.TrimSpace(window) == "" {
- 		window = date.GetGreeting()
- 	} else {
- 		window = lineReturnRegex.ReplaceAllString(window, "")
- 	}
+	window := string(cmdOutput)
+	if window == "i3" || strings.TrimSpace(window) == "" {
+		window = date.GetGreeting()
+	} else {
+		window = lineReturnRegex.ReplaceAllString(window, "")
+	}
 
- 	return window
+	return window
 }

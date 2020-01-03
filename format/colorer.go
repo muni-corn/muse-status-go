@@ -6,20 +6,20 @@ import (
 )
 
 var primaryColor = Color{ // {{{
-	RGBHex: "ffffff",
+	RGBHex:   "ffffff",
 	AlphaHex: "ff",
-} // }}}
+}                           // }}}
 var secondaryColor = Color{ // {{{
-	RGBHex: "ffffff",
+	RGBHex:   "ffffff",
 	AlphaHex: "c0",
-} // }}}
-var transparentColor = Color { // {{{
-	RGBHex: secondaryColor.RGBHex,
+}                             // }}}
+var transparentColor = Color{ // {{{
+	RGBHex:   secondaryColor.RGBHex,
 	AlphaHex: "00",
-} // }}}
+}                         // }}}
 var warningColor = Color{ // {{{
 	RGBHex: "ffaa00",
-} // }}}
+}                       // }}}
 var alarmColor = Color{ // {{{
 	RGBHex: "ff0000",
 } // }}}
@@ -38,27 +38,27 @@ func SecondaryColor() Color {
 // provided separate from the rgb, as sometimes the alpha channel is either in
 // argb or rgba
 type Color struct {
-	RGBHex string
+	RGBHex   string
 	AlphaHex string
 }
 
 // HexString returns a hex representation of the string (no #), depending on
 // the mode that muse-status is in
 func (c Color) HexString(mode Mode) string {
-	switch(mode) {
+	switch mode {
 	case LemonbarMode:
-		return c.AlphaHex + c.RGBHex;
+		return c.AlphaHex + c.RGBHex
 	default:
-		return c.RGBHex + c.AlphaHex;
+		return c.RGBHex + c.AlphaHex
 	}
 }
 
 // Colorer returns different colors for icon, primary, and
 // secondary colors
 type Colorer interface {
-    IconColor() Color
-    PrimaryColor() Color
-    SecondaryColor() Color
+	IconColor() Color
+	PrimaryColor() Color
+	SecondaryColor() Color
 }
 
 // ByteToHex takes a value from 0 to 255 and returns it in hexadecimal form
@@ -75,14 +75,14 @@ func ByteToHex(value int) string {
 // SetSecondaryColor sets the secondary (dim) color of
 // muse-status.
 func SetSecondaryColor(color string) {
-	secondaryColor.RGBHex = color[:6];
+	secondaryColor.RGBHex = color[:6]
 	if len(color) == 8 {
-		secondaryColor.AlphaHex = color[6:];
+		secondaryColor.AlphaHex = color[6:]
 	} else if len(color) != 6 {
 		// println("invalid secondary color")
 	}
-	transparentColor = Color {
-		RGBHex: secondaryColor.RGBHex,
+	transparentColor = Color{
+		RGBHex:   secondaryColor.RGBHex,
 		AlphaHex: "00",
 	}
 }
@@ -90,9 +90,9 @@ func SetSecondaryColor(color string) {
 // SetPrimaryColor sets the primary color of
 // muse-status.
 func SetPrimaryColor(color string) {
-	primaryColor.RGBHex = color[:6];
+	primaryColor.RGBHex = color[:6]
 	if len(color) == 8 {
-		primaryColor.AlphaHex = color[6:];
+		primaryColor.AlphaHex = color[6:]
 	} else if len(color) != 6 {
 		// println("invalid primary color")
 	}
@@ -100,10 +100,9 @@ func SetPrimaryColor(color string) {
 
 var (
 	defCol = &defaultColorer{}
-	wCol = &warnColorer{}
-	aCol = &alarmColorer{}
+	wCol   = &warnColorer{}
+	aCol   = &alarmColorer{}
 	dimCol = &dimColorer{}
-
 )
 
 // GetDefaultColorer returns the default colorer
@@ -127,7 +126,7 @@ func GetDimColorer() Colorer {
 }
 
 // defaultColorer just returns the default colors {{{
-type defaultColorer struct { }
+type defaultColorer struct{}
 
 // IconColor returns the default primaryColor
 func (d defaultColorer) IconColor() Color {
@@ -143,10 +142,11 @@ func (d defaultColorer) PrimaryColor() Color {
 func (d defaultColorer) SecondaryColor() Color {
 	return secondaryColor
 }
+
 // }}}
 
 // dimColorer just returns the default secondaryColor for everything {{{
-type dimColorer struct { }
+type dimColorer struct{}
 
 // IconColor returns the default secondaryColor
 func (d dimColorer) IconColor() Color {
@@ -162,10 +162,11 @@ func (d dimColorer) PrimaryColor() Color {
 func (d dimColorer) SecondaryColor() Color {
 	return secondaryColor
 }
+
 // }}}
 
 // alarmColorer returns blinking red {{{
-type alarmColorer struct { }
+type alarmColorer struct{}
 
 // IconColor returns blinking red
 func (d alarmColorer) IconColor() Color {
@@ -181,10 +182,11 @@ func (d alarmColorer) PrimaryColor() Color {
 func (d alarmColorer) SecondaryColor() Color {
 	return getAlarmPulseColor()
 }
+
 // }}}
 
 // warnColorer returns slow blinking orange {{{
-type warnColorer struct { }
+type warnColorer struct{}
 
 // IconColor returns slow blinking orange
 func (d warnColorer) IconColor() Color {
@@ -200,10 +202,11 @@ func (d warnColorer) PrimaryColor() Color {
 func (d warnColorer) SecondaryColor() Color {
 	return getWarnPulseColor()
 }
+
 // }}}
 
 // pulseColorer slowly blinks dim colors {{{
-type pulseColorer struct { }
+type pulseColorer struct{}
 
 // IconColor returns slow blinking orange
 func (d pulseColorer) IconColor() Color {
@@ -219,6 +222,7 @@ func (d pulseColorer) PrimaryColor() Color {
 func (d pulseColorer) SecondaryColor() Color {
 	return getDimPulseColor()
 }
+
 // }}}
 
 func getAlarmPulseColor() Color { // {{{

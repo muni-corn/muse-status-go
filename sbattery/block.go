@@ -169,7 +169,7 @@ func (b *Block) Text() (primary, secondary string) {
 		case Charging:
 			prefix = "Full at"
 		case Discharging:
-		    prefix = "Until"
+			prefix = "Until"
 		default:
 			return
 		}

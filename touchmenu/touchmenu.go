@@ -1,29 +1,29 @@
 package touchmenu
 
 import (
-    "github.com/muni-corn/muse-status/format"
+	"github.com/muni-corn/muse-status/format"
 )
 
 type Block struct{}
 
 func (b *Block) StartBroadcast() <-chan bool {
-    return make(chan bool)
+	return make(chan bool)
 }
 
-func (b *Block) Update() { }
+func (b *Block) Update() {}
 
 func (b *Block) Name() string {
-    return "touchmenu"
+	return "touchmenu"
 }
 
 func (b *Block) Hidden() bool {
-    return false
+	return false
 }
 
 func (b *Block) ForceShort() bool {
-    return false
+	return false
 }
 
 func (b *Block) Output(mode format.Mode) string {
-    return "%{A:onboard:}\uf70b%{A}"
+	return "%{A:onboard:}\uf70b%{A}"
 }

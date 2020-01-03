@@ -91,7 +91,7 @@ func getCurrentVolume() (percentage int, err error) {
 }
 
 func getIcon(percentage int) rune {
-	if (percentage <= 0) {
+	if percentage <= 0 {
 		return muteIcon
 	}
 

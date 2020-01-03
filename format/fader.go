@@ -57,4 +57,3 @@ func (f *FadingColorer) PrimaryColor() (color Color) {
 func (f *FadingColorer) SecondaryColor() (color Color) {
 	return f.color()
 }
-

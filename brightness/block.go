@@ -23,13 +23,13 @@ type Block struct {
 	card              string
 	currentBrightness int
 	lastBrightness    int
-	maxBrightness	  int
+	maxBrightness     int
 
 	text  string
 	icon  rune
 	fader *format.FadingColorer
 
-    rapidfire bool
+	rapidfire bool
 }
 
 // NewBrightnessBlock returns a new brightness.Block
@@ -39,8 +39,8 @@ func NewBrightnessBlock(card string, rapidfire bool) (*Block, error) {
 	}
 
 	b := &Block{
-		card: card,
-        rapidfire: rapidfire,
+		card:      card,
+		rapidfire: rapidfire,
 	}
 
 	var err error
@@ -49,10 +49,10 @@ func NewBrightnessBlock(card string, rapidfire bool) (*Block, error) {
 		return nil, err
 	}
 
-	b.fader = &format.FadingColorer {
-		Duration: 3,
+	b.fader = &format.FadingColorer{
+		Duration:   3,
 		StartColor: format.PrimaryColor(),
-		EndColor: format.SecondaryColor(),
+		EndColor:   format.SecondaryColor(),
 	}
 
 	return b, nil
@@ -60,9 +60,9 @@ func NewBrightnessBlock(card string, rapidfire bool) (*Block, error) {
 
 func (b *Block) StartBroadcast() <-chan bool {
 	c := make(chan bool)
-    if b.rapidfire {
-        go b.broadcast(c)
-    }
+	if b.rapidfire {
+		go b.broadcast(c)
+	}
 	return c
 }
 
@@ -70,14 +70,14 @@ func (b *Block) broadcast(c chan<- bool) {
 	for {
 		if b.fader.IsFading() {
 			c <- true
-		} 
-        b.Update()
+		}
+		b.Update()
 		if b.currentBrightness != b.lastBrightness {
 			b.fader.Trigger()
 			c <- true
-            b.lastBrightness = b.currentBrightness
+			b.lastBrightness = b.currentBrightness
 		}
-		
+
 		time.Sleep(time.Second / 10)
 	}
 }
@@ -89,14 +89,14 @@ func (b *Block) Name() string {
 
 // Update updates the text and icon of the block
 func (b *Block) Update() {
-    var err error
-    b.currentBrightness, err = b.getCurrentBrightness()
-    if err != nil {
-        return
-    }
+	var err error
+	b.currentBrightness, err = b.getCurrentBrightness()
+	if err != nil {
+		return
+	}
 
 	b.text = fmt.Sprintf("%d%%", b.currentBrightness*100/b.maxBrightness)
-	b.icon = getIcon(b.currentBrightness*100/b.maxBrightness)
+	b.icon = getIcon(b.currentBrightness * 100 / b.maxBrightness)
 }
 
 // Icon returns the brightness icon

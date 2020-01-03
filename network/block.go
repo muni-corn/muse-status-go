@@ -1,27 +1,27 @@
 package network
 
 import (
-	"github.com/mdlayher/wifi"
 	"github.com/muni-corn/muse-status/format"
+	"github.com/mdlayher/wifi"
 
-	"time"
 	"errors"
+	"time"
 )
 
 // Block is a block that transmits time and date data
 type Block struct {
-	iface *wifi.Interface
+	iface  *wifi.Interface
 	client *wifi.Client
 
-	currentSSID string
+	currentSSID        string
 	currentStrengthPct int
-	currentStatus	  networkStatus
+	currentStatus      networkStatus
 
 	dBm int
 
-	lastSSID string
+	lastSSID        string
 	lastStrengthPct int
-	lastStatus	  networkStatus
+	lastStatus      networkStatus
 }
 
 // NewDateBlock returns a new date.Block
@@ -44,7 +44,7 @@ func NewNetworkBlock(interfaceName string) (*Block, error) {
 	// but only select the one we want
 	return &Block{
 		client: client,
-		iface: iface,
+		iface:  iface,
 	}, nil
 }
 
@@ -120,20 +120,20 @@ func (b *Block) Update() {
 }
 
 const (
-	signalMaxDBm = -30
+	signalMaxDBm  = -30
 	noiseFloorDBm = -80
 )
 
 // thank u to i3status and NetworkManager :)
 func dBmToPercentage(dbm float32) float32 {
-	if (dbm < noiseFloorDBm) {
+	if dbm < noiseFloorDBm {
 		dbm = noiseFloorDBm
 	}
-	if (dbm > signalMaxDBm) {
+	if dbm > signalMaxDBm {
 		dbm = signalMaxDBm
 	}
 
-	return -0.04 * float32(dbm + 30) * float32(dbm + 30) + 100.0
+	return -0.04*float32(dbm+30)*float32(dbm+30) + 100.0
 }
 
 // Name returns "network"

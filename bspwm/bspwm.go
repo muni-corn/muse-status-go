@@ -1,10 +1,10 @@
 package bspwm
 
 import (
+	"fmt"
 	"os/exec"
 	"regexp"
 	"strings"
-	"fmt"
 
 	"github.com/muni-corn/muse-status/format"
 )
@@ -13,13 +13,13 @@ type workspaceState int
 
 const (
 	OccupiedState workspaceState = iota
-	ActiveState 
+	ActiveState
 	UrgentState
 	DormantState
 )
 
 type workspace struct {
-	name string
+	name  string
 	state workspaceState
 }
 
@@ -56,9 +56,9 @@ func parseWorkspaces(wmStatus string) (workspaces []workspace, hasUrgent bool) {
 			default:
 				status = DormantState
 			}
-			newWorkspace := workspace {
+			newWorkspace := workspace{
 				state: status,
-				name: ws[1:], // removes the state flag
+				name:  ws[1:], // removes the state flag
 			}
 			workspaces = append(workspaces, newWorkspace)
 		}
@@ -85,7 +85,7 @@ func lemonFormatWorkspaces(ws []workspace) string {
 		}
 		colorStr := color.AlphaHex + color.RGBHex
 		formatted += fmt.Sprintf("%%{F#%s}%s%%{F-}    ", colorStr, w.name)
-        formatted = fmt.Sprintf("%%{A:bspc desktop -f '^%s':}%s%%{A}", w.name, formatted)
+		formatted = fmt.Sprintf("%%{A:bspc desktop -f '^%s':}%s%%{A}", w.name, formatted)
 	}
 
 	return strings.TrimSpace(formatted)

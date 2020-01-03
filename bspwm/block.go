@@ -5,15 +5,15 @@ import (
 )
 
 type Block struct {
-	lastStatusOutput string
+	lastStatusOutput    string
 	currentStatusOutput string
-	hasUrgent bool
+	hasUrgent           bool
 
 	lemonOutput string
 
 	currentWorkspaces []workspace
 
-    rapidfire bool
+	rapidfire bool
 }
 
 func NewBSPWMBlock() *Block {
@@ -26,23 +26,23 @@ func (b *Block) StartBroadcast() <-chan bool { // returns a channel that sends s
 }
 
 func (b *Block) Update() {
-    b.currentStatusOutput = getWMStatus()
-    b.currentWorkspaces, b.hasUrgent = parseWorkspaces(b.currentStatusOutput)
-    b.lemonOutput = lemonFormatWorkspaces(b.currentWorkspaces)
+	b.currentStatusOutput = getWMStatus()
+	b.currentWorkspaces, b.hasUrgent = parseWorkspaces(b.currentStatusOutput)
+	b.lemonOutput = lemonFormatWorkspaces(b.currentWorkspaces)
 }
 
 func (b *Block) Name() string {
-    return "bspwm"
+	return "bspwm"
 }
 
 func (b *Block) Hidden() bool {
-    return false
+	return false
 }
 
 func (b *Block) ForceShort() bool {
-    return false
+	return false
 }
 
 func (b *Block) Output(mode format.Mode) string {
-    return b.lemonOutput
+	return b.lemonOutput
 }

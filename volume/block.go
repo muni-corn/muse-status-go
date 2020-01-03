@@ -1,8 +1,8 @@
 package volume
 
 import (
-	"time"
 	"fmt"
+	"time"
 
 	"github.com/muni-corn/muse-status/format"
 )
@@ -10,7 +10,7 @@ import (
 type Block struct {
 	lastVolume    int
 	currentVolume int
-	rapidfire bool
+	rapidfire     bool
 
 	fader *format.FadingColorer
 }
@@ -23,10 +23,10 @@ func NewVolumeBlock(rapidfire bool) *Block {
 	b := &Block{
 		rapidfire: rapidfire,
 	}
-	b.fader = &format.FadingColorer {
-		Duration: 3,
+	b.fader = &format.FadingColorer{
+		Duration:   3,
 		StartColor: format.PrimaryColor(),
-		EndColor: format.SecondaryColor(),
+		EndColor:   format.SecondaryColor(),
 	}
 	return b
 }
@@ -45,7 +45,7 @@ func (b *Block) broadcast(c chan<- bool) {
 	c <- true
 
 	for b.rapidfire {
-		b.Update() 
+		b.Update()
 
 		if b.fader.IsFading() {
 			c <- true
@@ -69,7 +69,7 @@ func (b *Block) Name() string {
 }
 
 func (b *Block) Icon() rune {
-	return getIcon(b.currentVolume) 
+	return getIcon(b.currentVolume)
 }
 
 func (b *Block) Text() (primary, secondary string) {

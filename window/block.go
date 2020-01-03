@@ -8,8 +8,8 @@ import (
 
 type Block struct {
 	currentWindow string
-	lastWindow string
-    rapidfire bool
+	lastWindow    string
+	rapidfire     bool
 }
 
 func NewWindowBlock(rapidfire bool) *Block {
@@ -24,9 +24,9 @@ func NewWindowBlock(rapidfire bool) *Block {
 
 func (b *Block) StartBroadcast() <-chan bool {
 	c := make(chan bool)
-    if b.rapidfire {
-        go b.broadcast(c)
-    }
+	if b.rapidfire {
+		go b.broadcast(c)
+	}
 	return c
 }
 

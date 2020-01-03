@@ -107,13 +107,13 @@ func I3JSONOf(b ClassicBlock) *I3JSONBlock {
 		fullText = fullPangoOf(b)
 	}
 
-    j := I3JSONBlock {
-        Name: b.Name(),
-        FullText: fullText,
-        ShortText: shortText,
-        Markup: "pango",
-        Separator: true,
-    }
+	j := I3JSONBlock{
+		Name:      b.Name(),
+		FullText:  fullText,
+		ShortText: shortText,
+		Markup:    "pango",
+		Separator: true,
+	}
 
 	return &j
 }

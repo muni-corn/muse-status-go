@@ -1,10 +1,10 @@
 package format
 
 import (
-    "encoding/json"
+	"encoding/json"
 	"fmt"
-	"strings"
 	"strconv"
+	"strings"
 )
 
 var textFont, iconFont = "Roboto 10", "Material Design Icons 12"
@@ -27,47 +27,48 @@ func Chain(blocks ...DataBlock) string {
 	var first int
 	var final string
 
-    switch mode {
-    case I3JSONMode:
-        i3s := []I3JSONBlock{}
-        for _, b := range blocks {
-            if c, ok := b.(ClassicBlock); ok {
-                if j := I3JSONOf(c); j != nil {
-                    i3s = append(i3s, *j)
-                }
-            }
-        }
-        marshaled, _ := json.Marshal(i3s)
-        return "," + string(marshaled)
-    case LemonbarMode:
-        // huh. increment first until we find a module that
-        // isn't nil or blank (empty for loop)
-        for first = 0; first < len(blocks) && blocks[first] == nil; first++ { }
+	switch mode {
+	case I3JSONMode:
+		i3s := []I3JSONBlock{}
+		for _, b := range blocks {
+			if c, ok := b.(ClassicBlock); ok {
+				if j := I3JSONOf(c); j != nil {
+					i3s = append(i3s, *j)
+				}
+			}
+		}
+		marshaled, _ := json.Marshal(i3s)
+		return "," + string(marshaled)
+	case LemonbarMode:
+		// huh. increment first until we find a module that
+		// isn't nil or blank (empty for loop)
+		for first = 0; first < len(blocks) && blocks[first] == nil; first++ {
+		}
 
-        // if everything is blank, return a blank string
-        if first >= len(blocks) {
-            return ""
-        }
+		// if everything is blank, return a blank string
+		if first >= len(blocks) {
+			return ""
+		}
 
-        final = blocks[first].Output(mode)
+		final = blocks[first].Output(mode)
 
-        for i := first + 1; i < len(blocks); i++ {
-            if blocks[i] == nil || blocks[i].Hidden() {
-                continue
-            }
+		for i := first + 1; i < len(blocks); i++ {
+			if blocks[i] == nil || blocks[i].Hidden() {
+				continue
+			}
 
-            v := blocks[i].Output(mode)
+			v := blocks[i].Output(mode)
 
-            // trim space at the ends
-            v = strings.TrimSpace(v)
-            if v != "" {
-                final += ModuleSeparator() + v
-            }
-        }
-        return final
-    }
+			// trim space at the ends
+			v = strings.TrimSpace(v)
+			if v != "" {
+				final += ModuleSeparator() + v
+			}
+		}
+		return final
+	}
 
-    return ""
+	return ""
 }
 
 // Escape escapes characters for the i3 json protocol
@@ -173,5 +174,5 @@ func SetIconFont(font string) {
 }
 
 func FormatClassicBlock(c ClassicBlock) string {
-    return LemonbarOf(c)
+	return LemonbarOf(c)
 }
