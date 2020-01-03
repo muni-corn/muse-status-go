@@ -14,7 +14,7 @@ type Block struct {
 
 func NewWindowBlock(rapidfire bool) *Block {
 	if rapidfire {
-		println("WARNING! A window block has been created with rapidfire enabled. This can be VERY bad for your system's performance. Try using `muse-status notify window` instead after window updates.")
+		// println("WARNING! A window block has been created with rapidfire enabled. This can be VERY bad for your system's performance. Try using `muse-status notify window` instead after window updates.")
 	}
 
 	return &Block{
@@ -70,5 +70,5 @@ func (b *Block) ForceShort() bool {
 }
 
 func (b *Block) Output(mode format.Mode) string {
-	return format.LemonbarOf(b)
+	return format.FormatClassicBlock(b)
 }

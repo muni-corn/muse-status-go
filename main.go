@@ -2,17 +2,17 @@ package main
 
 import (
 	"github.com/muni-corn/muse-status/brightness"
-	"github.com/muni-corn/muse-status/bspwm"
+	// "github.com/muni-corn/muse-status/bspwm"
 	"github.com/muni-corn/muse-status/daemon"
 	"github.com/muni-corn/muse-status/date"
 	"github.com/muni-corn/muse-status/format"
 	"github.com/muni-corn/muse-status/network"
 	"github.com/muni-corn/muse-status/playerctl"
 	"github.com/muni-corn/muse-status/sbattery"
-	"github.com/muni-corn/muse-status/touchmenu"
+	// "github.com/muni-corn/muse-status/touchmenu"
 	"github.com/muni-corn/muse-status/volume"
 	"github.com/muni-corn/muse-status/weather"
-	"github.com/muni-corn/muse-status/window"
+	// "github.com/muni-corn/muse-status/window"
 
 	"bufio"
 	"fmt"
@@ -26,27 +26,27 @@ const addr = ":1612"
 func main() {
 	handleArgs()
 
-	touchmenuBlock := &touchmenu.Block{}
-	bspwmBlock := bspwm.NewBSPWMBlock()
+	// touchmenuBlock := &touchmenu.Block{}
+	// bspwmBlock := bspwm.NewBSPWMBlock()
 	batteryBlock, err := sbattery.NewSmartBatteryBlock("BAT0", 30, 15)
 	if err != nil {
-		println(err)
+		// println(err)
 	}
 
 	brightnessBlock, err := brightness.NewBrightnessBlock("amdgpu_bl0", false)
 	if err != nil {
-		println(err)
+		// println(err)
 	}
 
 	dateBlock := date.NewDateBlock()
 	networkBlock, err := network.NewNetworkBlock("wlo1")
 	if err != nil {
-		println(err)
+		// println(err)
 	}
 
 	playerctlBlock := playerctl.NewPlayerctlBlock()
 	volumeBlock := volume.NewVolumeBlock(false)
-	windowBlock := window.NewWindowBlock(false)
+	// windowBlock := window.NewWindowBlock(false)
 	weatherBlock := weather.NewWeatherBlock(nil)
 
 	var (
@@ -55,11 +55,11 @@ func main() {
 		rightBlocks  []format.DataBlock
 	)
 
-	for _, b := range []format.DataBlock{touchmenuBlock, bspwmBlock, windowBlock} {
-		if b != nil {
-			leftBlocks = append(leftBlocks, b)
-		}
-	}
+// 	for _, b := range []format.DataBlock{touchmenuBlock, bspwmBlock, windowBlock} {
+// 		if b != nil {
+// 			leftBlocks = append(leftBlocks, b)
+// 		}
+// 	}
 
 	for _, b := range []format.DataBlock{dateBlock, weatherBlock, playerctlBlock} {
 		if b != nil {
@@ -84,7 +84,7 @@ func main() {
 	var client net.Conn
 
 	if client, err = net.Dial("tcp", addr); err != nil {
-		println("error connecting to daemon; starting own")
+		// println("error connecting to daemon; starting own")
 		err = d.Start()
 		if err != nil {
 			panic(err)
@@ -101,7 +101,6 @@ func main() {
 
 func handleClient(conn net.Conn) error {
 	r := bufio.NewReader(conn)
-
 	for {
 		str, err := r.ReadString('\n')
 		if err != nil {
@@ -112,7 +111,7 @@ func handleClient(conn net.Conn) error {
 }
 
 func handleArgs() {
-	// muse be a command if first (second, technically) argument doesn't start
+	// must be a command if first (second, technically) argument doesn't start
 	// with a dash. exit after command
 	if len(os.Args) >= 2 && os.Args[1][0] != '-' {
 		err := sendCommand(os.Args[1:])
@@ -139,8 +138,13 @@ func handleArgs() {
 			format.SetTextFont(next)
 		case "-i", "--icon-font":
 			format.SetIconFont(next)
-			// case "-r", "--rapid-fire":
-			// remove completely? ignore notify actions and "rapid fire" check instead
+		case "-m", "--mode":
+            switch next {
+            case "i3":
+                format.SetFormatMode(format.I3JSONMode)
+            case "lemon":
+                format.SetFormatMode(format.LemonbarMode)
+            }
 		}
 	}
 }

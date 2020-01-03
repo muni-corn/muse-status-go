@@ -157,7 +157,7 @@ func getLocation() (*WeatherLocation, error) {
     if err != nil {
         return nil, err
     }
-    println("ip: " + ip)
+    // println("ip: " + ip)
 
     url := fmt.Sprintf(ipStackURLTemplate, ip, ipStackKey)
 	res, err := http.Get(url)
@@ -169,7 +169,7 @@ func getLocation() (*WeatherLocation, error) {
 
 	// get response as a []byte
 	resBodyStr, err := ioutil.ReadAll(res.Body)
-    println(string(resBodyStr))
+    // println(string(resBodyStr))
 	if err != nil {
 		return nil, err
 	}
@@ -178,7 +178,7 @@ func getLocation() (*WeatherLocation, error) {
 	var loc WeatherLocation
 	json.Unmarshal(resBodyStr, &loc)
 
-    println(fmt.Sprintf("location: %f, %f", loc.Latitude, loc.Longitude))
+    // println(fmt.Sprintf("location: %f, %f", loc.Latitude, loc.Longitude))
 
 	return &loc, nil
 }

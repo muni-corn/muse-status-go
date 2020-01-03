@@ -167,7 +167,7 @@ func (b *Block) ForceShort() bool {
 }
 
 func (b *Block) Output(mode format.Mode) string {
-	return format.LemonbarOf(b)
+	return format.FormatClassicBlock(b)
 }
 
 func getIcon(signalStrengthPct int, status networkStatus) rune {

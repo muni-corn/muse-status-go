@@ -18,8 +18,7 @@ import (
 // )
 
 const (
-	jsonTemplate      = `{"name":"%s","full_text":"%s","short_text":"%s","markup":"pango","separator":true}`
-	pangoTemplate     = `<span color=\"#%s\" font=\"%s\">%s</span>`
+	pangoTemplate     = `<span color="#%s" font="%s">%s</span>`
 	twoStringTemplate = "%s  %s"
 	lemonTemplate     = "%%{%s} %s"
 )
@@ -81,11 +80,19 @@ func LemonbarOf(b ClassicBlock) string {
 	return icon + "  " + primary + "  " + secondary
 }
 
+type I3JSONBlock struct {
+	Name      string `json:"name"`
+	FullText  string `json:"full_text"`
+	ShortText string `json:"short_text"`
+	Markup    string `json:"markup"`
+	Separator bool   `json:"separator"`
+}
+
 // I3JSONOf Block b. Turns the information of b into a JSON
 // object for the i3 status protocol
-func I3JSONOf(b ClassicBlock) string {
+func I3JSONOf(b ClassicBlock) *I3JSONBlock {
 	if b.Hidden() {
-		return ""
+		return nil
 	}
 
 	// get short text
@@ -100,15 +107,22 @@ func I3JSONOf(b ClassicBlock) string {
 		fullText = fullPangoOf(b)
 	}
 
-	// return the json
-	return fmt.Sprintf(jsonTemplate, b.Name(), fullText, shortText)
+    j := I3JSONBlock {
+        Name: b.Name(),
+        FullText: fullText,
+        ShortText: shortText,
+        Markup: "pango",
+        Separator: true,
+    }
+
+	return &j
 }
 
 func fullPangoOf(b ClassicBlock) string {
-	secondaryRawText, _ := b.Text()
+	_, secondaryRawText := b.Text()
 	var secondaryText string
 	if secondaryRawText != "" {
-		secondaryText = fmt.Sprintf(pangoTemplate, b.Colorer().SecondaryColor(), textFont, secondaryRawText)
+		secondaryText = fmt.Sprintf(pangoTemplate, b.Colorer().SecondaryColor().HexString(mode), textFont, secondaryRawText)
 	}
 
 	return fmt.Sprintf(twoStringTemplate, shortPangoOf(b), secondaryText)
@@ -121,10 +135,10 @@ func shortPangoOf(b ClassicBlock) string {
 	var icon, primaryText string
 
 	if iconRaw != ' ' {
-		icon = fmt.Sprintf(pangoTemplate, b.Colorer().IconColor(), textFont, string(iconRaw))
+		icon = fmt.Sprintf(pangoTemplate, b.Colorer().IconColor().HexString(mode), iconFont, string(iconRaw))
 	}
 	if primaryRawText != "" {
-		primaryText = fmt.Sprintf(pangoTemplate, b.Colorer().PrimaryColor(), textFont, strings.TrimSpace(primaryRawText))
+		primaryText = fmt.Sprintf(pangoTemplate, b.Colorer().PrimaryColor().HexString(mode), textFont, strings.TrimSpace(primaryRawText))
 	}
 
 	return fmt.Sprintf(twoStringTemplate, icon, primaryText)

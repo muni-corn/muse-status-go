@@ -44,7 +44,7 @@ type Color struct {
 
 // HexString returns a hex representation of the string (no #), depending on
 // the mode that muse-status is in
-func (c *Color) HexString(mode Mode) string {
+func (c Color) HexString(mode Mode) string {
 	switch(mode) {
 	case LemonbarMode:
 		return c.AlphaHex + c.RGBHex;
@@ -79,7 +79,7 @@ func SetSecondaryColor(color string) {
 	if len(color) == 8 {
 		secondaryColor.AlphaHex = color[6:];
 	} else if len(color) != 6 {
-		println("invalid secondary color")
+		// println("invalid secondary color")
 	}
 	transparentColor = Color {
 		RGBHex: secondaryColor.RGBHex,
@@ -94,7 +94,7 @@ func SetPrimaryColor(color string) {
 	if len(color) == 8 {
 		primaryColor.AlphaHex = color[6:];
 	} else if len(color) != 6 {
-		println("invalid primary color")
+		// println("invalid primary color")
 	}
 }
 

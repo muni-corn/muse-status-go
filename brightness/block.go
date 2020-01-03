@@ -35,7 +35,7 @@ type Block struct {
 // NewBrightnessBlock returns a new brightness.Block
 func NewBrightnessBlock(card string, rapidfire bool) (*Block, error) {
 	if rapidfire {
-		println("WARNING! A brightness block has been created with rapidfire enabled. This can be VERY bad for your system's performance. Try using `muse-status notify volume` instead after volume updates.")
+		// println("WARNING! A brightness block has been created with rapidfire enabled. This can be VERY bad for your system's performance. Try using `muse-status notify volume` instead after volume updates.")
 	}
 
 	b := &Block{
@@ -135,5 +135,5 @@ func (b *Block) getCurrentBrightness() (value int, err error) {
 }
 
 func (b *Block) Output(mode format.Mode) string {
-	return format.LemonbarOf(b)
+	return format.FormatClassicBlock(b)
 }

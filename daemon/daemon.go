@@ -22,7 +22,7 @@ func New(addr string, leftBlocks, centerBlocks, rightBlocks []format.DataBlock) 
 	d := &Daemon{
 		addr: addr, 
 		leftBlocks: leftBlocks, 
-		centerBlocks: centerBlocks, 
+		centerBlocks: reverse(centerBlocks), 
 		rightBlocks: rightBlocks,
 	}
 
@@ -34,7 +34,7 @@ func New(addr string, leftBlocks, centerBlocks, rightBlocks []format.DataBlock) 
 }
 
 func (d *Daemon) Start() error {
-	println("starting daemon")
+	// println("starting daemon")
 
 	s, err := net.Listen("tcp", d.addr)
 	if err != nil {
@@ -48,12 +48,14 @@ func (d *Daemon) Start() error {
 		for {
 			conn, err := s.Accept()
 			if err != nil {
-				println("error on accept:", err.Error())
+				// println("error on accept:", err.Error())
 				continue
 			}
+
 			d.handleConnection(conn, currentStatus)
 		}
 	}()
+
 
 	outputChan := d.startLemonbarStatus()
 
@@ -90,86 +92,115 @@ func (d *Daemon) HandleCommand(cmd string) error {
 func (d *Daemon) handleConnection(conn net.Conn, init string) {
 	d.connections = append(d.connections, conn)
 
-	conn.Write([]byte(init + "\n"))
+    if format.GetFormatMode() == format.I3JSONMode {
+        conn.Write([]byte(`{"version":1}`+"\n["))
+    }
 
-	r := bufio.NewReader(conn)
+    conn.Write([]byte(init + "\n"))
 
-	go func() {
-		for {
-			str, err := r.ReadString('\n')
-			if err != nil {
-				return
-			}
+    r := bufio.NewReader(conn)
 
-			err = d.HandleCommand(str)
-			if err != nil {
-				conn.Write([]byte(err.Error() + "\n"))
-			}
-		}
-	}()
+    go func() {
+        for {
+            str, err := r.ReadString('\n')
+            if err != nil {
+                return
+            }
+
+            // try to handle a command, or else print what must be the status
+            err = d.HandleCommand(str)
+            if err != nil {
+                conn.Write([]byte(err.Error() + "\n"))
+            }
+        }
+    }()
 }
 
 func (d *Daemon) allBlocks() []format.DataBlock {
-	return append(d.leftBlocks, append(d.centerBlocks, d.rightBlocks...)...)
+    return append(d.leftBlocks, append(d.centerBlocks, d.rightBlocks...)...)
 }
 
 func (d *Daemon) startLemonbarStatus() <-chan string {
-	outputChannel := make(chan string)
+    // println("starting output")
+    outputChannel := make(chan string)
 
-	agg := make(chan bool)
-	// for _, b := range centerModules {
-	for _, b := range d.allBlocks() {
-		c := b.StartBroadcast()
-		go func() {
-			for v := range c {
-				agg <- v
-			}
-		}()
-	}
+    agg := make(chan bool)
+    // for _, b := range centerModules {
+    for _, b := range d.allBlocks() {
+        c := b.StartBroadcast()
+        go func() {
+            for v := range c {
+                agg <- v
+            }
+        }()
+    }
 
-	go func() {
-		for v := range agg {
-			if !v {
-				continue
-			}
+    go func() {
+        // trims first comma on i3bar protocol
+        isFirst := true
+        for v := range agg {
+            if !v {
+                continue
+            }
+            // println("updating status")
 
-			outputChannel <- d.makeStatusString()
-		}
-	}()
+            statusStr := d.makeStatusString(&isFirst)
 
-	return outputChannel
+            if format.GetFormatMode() == format.I3JSONMode && isFirst {
+                statusStr = statusStr[1:]
+                isFirst = true
+            }
+
+            outputChannel <- statusStr
+        }
+    }()
+
+    return outputChannel
 }
 
-func (d *Daemon) makeStatusString() string {
-	l := format.Chain(d.leftBlocks...)
-	c := format.Chain(d.centerBlocks...)
-	r := format.Chain(d.rightBlocks...)
-	return fmt.Sprintf("%%{l}%s%%{c}%s%%{r}%s", l, c, r)
+func (d *Daemon) makeStatusString(isFirst *bool) string {
+    switch format.GetFormatMode() {
+    case format.I3JSONMode:
+        // we will probably want to re-include left modules once we get config files working
+        b := format.Chain(append(d.rightBlocks, d.centerBlocks...)...)
+        if isFirst != nil && *isFirst {
+            *isFirst = false
+            return b[1:] // trims comma
+        } else {
+            return b
+        }
+    case format.LemonbarMode:
+        l := format.Chain(d.leftBlocks...)
+        c := format.Chain(d.centerBlocks...)
+        r := format.Chain(d.rightBlocks...)
+        return fmt.Sprintf("%%{l}%s%%{c}%s%%{r}%s", l, c, r)
+    }
+    return ""
 }
 
 func (d *Daemon) echo(str string) error {
-	for _, conn := range d.connections {
-		_, err := conn.Write([]byte(str + "\n"))
-		if err != nil {
-			return err
-		}
-	}
+    for _, conn := range d.connections {
+        _, err := conn.Write([]byte(str + "\n"))
+        if err != nil {
+            return err
+        }
+    }
 
-	return nil
+    return nil
 }
 
 func (d *Daemon) echoNewStatus() error {
-	status := d.makeStatusString()
-	return d.echo(status)
+    status := d.makeStatusString(nil)
+    return d.echo(status)
 }
 
 func (d *Daemon) notify(what string) {
-	for _, b := range d.allBlocks() {
-		if b.Name() == what {
-			b.Update()
-			d.echoNewStatus()
-		}
-	}
+    for _, b := range d.allBlocks() {
+        if b.Name() == what {
+            b.Update()
+            d.echoNewStatus()
+        }
+    }
 }
 
 func (d *Daemon) listenForXorgChanges() {
@@ -181,7 +212,7 @@ func (d *Daemon) listenForXorgChanges() {
 
     err = cmd.Start()
     if err != nil {
-        println(err)
+        // println(err)
         return
     }
 
@@ -190,10 +221,18 @@ func (d *Daemon) listenForXorgChanges() {
     for {
         _, _, err := bufr.ReadLine()
         if err != nil {
-            println(err)
+            // println(err)
         }
 
-		d.notify("bspwm")
-		d.notify("window")
+        d.notify("bspwm")
+        d.notify("window")
     }
+}
+
+func reverse(slice []format.DataBlock) []format.DataBlock {
+    for left, right := 0, len(slice)-1; left < right; left, right = left+1, right-1 {
+        slice[left], slice[right] = slice[right], slice[left]
+    }
+
+    return slice
 }

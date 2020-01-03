@@ -45,19 +45,19 @@ func (b *Block) broadcast(c chan<- bool) {
     go func() {
         err = metaCmd.Start()
         if err != nil {
-            println(err)
+            // println(err)
             return
         }
 
         defer mr.Close()
         for {
-            in, _, err := metaCmdReader.ReadLine()
+            _, _, err := metaCmdReader.ReadLine()
             if err != nil {
-                println(err)
+                // println(err)
                 continue
             }
 
-            println(string(in))
+            // println(string(in))
             b.Update()
             c <- true
         }
@@ -66,7 +66,7 @@ func (b *Block) broadcast(c chan<- bool) {
     go func() {
         err = statusCmd.Start()
         if err != nil {
-            println(err)
+            // println(err)
             return
         }
 
@@ -74,7 +74,7 @@ func (b *Block) broadcast(c chan<- bool) {
         for {
             _, _, err := statusCmdReader.ReadLine()
             if err != nil {
-                println(err)
+                // println(err)
                 continue
             }
 
@@ -103,7 +103,7 @@ func (b *Block) ForceShort() bool {
 }
 
 func (b *Block) Output(mode format.Mode) string {
-    return format.LemonbarOf(b)
+    return format.FormatClassicBlock(b)
 }
 
 func (b *Block) Text() (primary, secondary string) {
